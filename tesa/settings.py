@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from decouple import config, Csv
+from django.db import models
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,7 +22,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = '9-tbz5=^0)lnfcs1fq9!(iqel2mf^g-190e%swc&+_d!1eq#g6'
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -33,6 +33,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOST', cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
+    'clientes.apps.ClientesConfig',
+    'usuarios.apps.UsuariosConfig',
     'tareas.apps.TareasConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -60,7 +62,7 @@ ROOT_URLCONF = 'tesa.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'),],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,6 +77,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tesa.wsgi.application'
 
+# Usuarios customizados
+AUTH_USER_MODEL = 'usuarios.Usuario'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
@@ -141,5 +145,5 @@ STATICFILES_FINDERS = [
 CORS_ORIGIN_ALLOW_ALL = False
 # React se ejecuta en localhost:3000
 CORS_ORIGIN_WHITELIST = [
-       'http://localhost:3000',
+    'http://localhost:3000',
 ]

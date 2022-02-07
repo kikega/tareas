@@ -1,0 +1,38 @@
+{% extends 'usuarios/base.html' %}
+{% load static %}
+{% block content %}
+  
+<main class="form-signin">
+  
+  
+  <form method="post">
+    {% csrf_token %}
+    <img class="mb-4" src="{% static 'img/egalvez-logo-azul.png' %}" alt="" width="218" height="64">
+    <h1 class="h3 mb-3 fw-normal">Por favor, autentiquese</h1>
+    
+    
+    <div class="form-floating mb-3">
+      <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com">
+      <label for="floatingInput">Email</label>
+    </div>
+    <div class="form-floating mb-5">
+      <input type="password" class="form-control" name="password" id="floatingPassword" placeholder="Password">
+      <label for="floatingPassword">Password</label>
+    </div>
+    
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
+  </form>
+  
+  {% if error %}
+    <div class="mt-3 alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+  {% endif %}
+  
+  <p class="mt-5 mb-3 text-muted">&copy; egalvez–2022</p>
+</main>
+
+{% endblock content %}
+
+    
+

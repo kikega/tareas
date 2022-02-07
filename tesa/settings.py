@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 from decouple import config, Csv
-from django.db import models
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -139,6 +139,7 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'collectstatic')
 
 # Ajuste ce CORS
 # No habilitamos CORS para todos los dominios
@@ -147,3 +148,6 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
 ]
+
+# Login de usuarios
+LOGIN_URL = 'login/'

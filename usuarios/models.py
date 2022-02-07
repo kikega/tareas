@@ -20,7 +20,7 @@ class Usuario(AbstractUser):
         message="Telefono en el formato +99999999999, hasta 11 digitos"
     )
     numero_telefono = models.CharField(
-        validators=[tfno_regex], max_length=10, blank=True)
+        validators=[tfno_regex], max_length=11, blank=True)
     verificado = models.BooleanField(
         'verificado',
         default=True,

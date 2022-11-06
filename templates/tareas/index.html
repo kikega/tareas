@@ -1,20 +1,36 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Index</h1>
-    <p>Usuario logado
-        
-        {% if user.is_authenticated %}
-            {{ user.username|capfirst}}
-        {% endif %}
-            
-    </p>
-    <a href="{% url 'logout' %}">Salir</a>
-</body>
-</html>
+{% extends 'tareas/base.html' %} 
+{% block content %} 
+{% include 'tareas/navbar.html' %}
+
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tareas</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+      <a type="button" class="btn btn-sm btn-primary" href="{% url 'addtarea' %}">
+        Insertar
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <table id="tablatarea" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tarea</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tarea %}
+          <tr>
+            <td>{{ t.tarea }}</td>
+            <td>{{ t.fecha_inicio }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</main>
+
+{% endblock content %}

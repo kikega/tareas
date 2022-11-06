@@ -33,9 +33,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOST', cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
-    'clientes.apps.ClientesConfig',
     'usuarios.apps.UsuariosConfig',
-    'tareas.apps.TareasConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

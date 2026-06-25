@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Tarea | GestorPro{% endblock %}
+
+{% block head %}
+<!-- Marked library for live Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left/Center Columns: Task Edit & Preview -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="flex items-center space-x-3 text-sm text-zinc-400">
+            <a href="{% url 'task_list_create' %}" class="hover:text-white transition">Tareas</a>
+            <i class="fa-solid fa-chevron-right text-xs text-zinc-650"></i>
+            <span class="text-zinc-200">Editar Tarea</span>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h2 class="text-2xl font-bold text-white mb-6">Detalles de la Tarea</h2>
+            
+            <form action="{% url 'task_edit' task.id %}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="title" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Título de la Tarea</label>
+                    <input type="text" name="title" id="title" value="{{ task.title }}" required 
+                           class="w-full px-4 py-3 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="project" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Proyecto</label>
+                        <select name="project" id="project" required 
+                                class="w-full px-3 py-2.5 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition duration-200">
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if task.project.id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="category" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Categoría</label>
+                        <select name="category" id="category" 
+                                class="w-full px-3 py-2.5 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition duration-200">
+                            <option value="">Ninguna</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if task.category.id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Estado</label>
+                        <select name="status" id="status" disabled
+                                class="w-full px-3 py-2.5 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-550 cursor-not-allowed text-sm">
+                            <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Pendiente</option>
+                            <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>En Progreso</option>
+                            <option value="COMPLETED" {% if task.status == 'COMPLETED' %}selected{% endif %}>Completada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Etiquetas</label>
+                    <div class="flex flex-wrap gap-3 p-3 bg-zinc-950 border border-zinc-800 rounded-xl">
+                        {% for tag in tags %}
+                        <label class="flex items-center space-x-2 text-xs text-zinc-400 cursor-pointer hover:text-zinc-200 transition">
+                            <input type="checkbox" name="tags" value="{{ tag.id }}" 
+                                   {% if tag in task.tags.all %}checked{% endif %}
+                                   class="rounded border-zinc-800 bg-zinc-900 text-indigo-600 focus:ring-indigo-500">
+                            <span>#{{ tag.name }}</span>
+                        </label>
+                        {% empty %}
+                        <span class="text-zinc-600 text-xs">No hay etiquetas creadas.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Markdown Tab switcher -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <label for="description" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Descripción de Acción</label>
+                        <div class="flex space-x-2 text-xs">
+                            <button type="button" id="tab-write" onclick="switchTab('write')" class="px-2.5 py-1 rounded bg-zinc-850 text-indigo-400 font-bold border border-zinc-800">Editor</button>
+                            <button type="button" id="tab-preview" onclick="switchTab('preview')" class="px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-250 transition border border-transparent">Previsualizar</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Text Area Input -->
+                    <div id="editor-container">
+                        <textarea name="description" id="description" rows="6" 
+                                  class="w-full px-4 py-3 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 font-mono" 
+                                  placeholder="Escribe la descripción de la acción utilizando Markdown...">{{ task.description }}</textarea>
+                    </div>
+
+                    <!-- Markdown Live Preview Container -->
+                    <div id="preview-container" class="hidden p-4 min-h-[140px] bg-zinc-950 border border-zinc-800 rounded-xl overflow-y-auto text-zinc-200 prose prose-invert max-w-none text-sm leading-relaxed">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Attachment Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-zinc-800">
+                    <div>
+                        <label for="attachment" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Reemplazar Adjunto (.md)</label>
+                        <input type="file" name="attachment" id="attachment" accept=".md"
+                               class="w-full text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-850 file:text-zinc-200 hover:file:bg-zinc-800 cursor-pointer border border-zinc-800 bg-zinc-950 rounded-xl text-xs p-1 focus:outline-none">
+                    </div>
+                    {% if task.attachment %}
+                    <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-shield text-indigo-400 text-2xl"></i>
+                            <div>
+                                <span class="text-xs font-bold text-zinc-300 block truncate max-w-[150px]">{{ task.attachment.name }}</span>
+                                <span class="text-[10px] text-zinc-500">Formato Markdown (.md)</span>
+                            </div>
+                        </div>
+                        <a href="{{ task.attachment.url }}" download class="bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-indigo-500/10">
+                            Descargar
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="flex space-x-3 pt-4 border-t border-zinc-800">
+                    <button type="submit" 
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-xl text-sm transition duration-200 shadow-md">
+                        Guardar Cambios
+                    </button>
+                    <a href="{% url 'task_list_create' %}" class="bg-zinc-850 hover:bg-zinc-800 text-zinc-300 py-3 px-6 rounded-xl text-sm font-semibold transition">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Subtasks CRUD -->
+    <div class="space-y-6">
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-white">Subtareas</h3>
+                <span class="text-xs text-zinc-500 font-medium">Time Tracking</span>
+            </div>
+
+            <!-- List of Subtasks -->
+            <div id="subtasks-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                {% for subtask in subtasks %}
+                    {% include 'tasks/partials/subtask_item.html' %}
+                {% empty %}
+                    <div id="no-subtasks" class="border border-dashed border-zinc-800/80 rounded-xl p-8 text-center bg-zinc-950/20">
+                        <span class="text-xs text-zinc-650">No hay subtareas definidas para esta tarea.</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Subtask Form (HTMX) -->
+            <form hx-post="{% url 'subtask_add' task.id %}"
+                  hx-target="#subtasks-list"
+                  hx-swap="beforeend"
+                  hx-on="htmx:afterRequest: this.reset(); document.getElementById('no-subtasks')?.remove()"
+                  class="mt-6 pt-6 border-t border-zinc-850 flex space-x-2">
+                <input type="text" name="title" required 
+                       class="flex-1 px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs transition duration-200" 
+                       placeholder="Añadir subtarea...">
+                <button type="submit" 
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 rounded-xl text-xs transition duration-200">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        const editorContainer = document.getElementById('editor-container');
+        const previewContainer = document.getElementById('preview-container');
+        const tabWrite = document.getElementById('tab-write');
+        const tabPreview = document.getElementById('tab-preview');
+        const descText = document.getElementById('description').value;
+
+        if (tab === 'preview') {
+            editorContainer.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            tabWrite.className = 'px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-250 transition border border-transparent';
+            tabPreview.className = 'px-2.5 py-1 rounded bg-zinc-850 text-indigo-400 font-bold border border-zinc-800';
+            
+            // Compile Markdown
+            previewContainer.innerHTML = marked.parse(descText || "*Sin descripción.*");
+        } else {
+            editorContainer.classList.remove('hidden');
+            previewContainer.classList.add('hidden');
+            tabWrite.className = 'px-2.5 py-1 rounded bg-zinc-850 text-indigo-400 font-bold border border-zinc-800';
+            tabPreview.className = 'px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-250 transition border border-transparent';
+        }
+    }
+</script>
+{% endblock %}

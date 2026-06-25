@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendario | GestorPro{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white">Calendario de Tareas</h1>
+            <p class="text-zinc-400 text-sm mt-1">Navega por las fechas de creación y vencimiento de tus tareas.</p>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
+            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="text-zinc-400 hover:text-white p-2 rounded hover:bg-zinc-800 transition">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <span class="text-sm font-semibold text-white px-4">
+                {{ month_name }} {{ year }}
+            </span>
+            <a href="?month={{ next_month }}&year={{ next_year }}" class="text-zinc-400 hover:text-white p-2 rounded hover:bg-zinc-800 transition">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+        <!-- Weekdays header -->
+        <div class="grid grid-cols-7 border-b border-zinc-800 bg-zinc-950/60 text-center text-xs font-bold uppercase tracking-wider text-zinc-500 py-3">
+            <div>Lunes</div>
+            <div>Martes</div>
+            <div>Miércoles</div>
+            <div>Jueves</div>
+            <div>Viernes</div>
+            <div>Sábado</div>
+            <div>Domingo</div>
+        </div>
+
+        <!-- Days -->
+        <div class="grid grid-cols-7 grid-rows-5 gap-px bg-zinc-800">
+            {% for day in days %}
+                <div class="bg-zinc-900 min-h-[120px] p-3 flex flex-col justify-between hover:bg-zinc-900/60 transition duration-150">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold {% if day.day == 0 %}text-zinc-700{% else %}text-zinc-400{% endif %}">
+                            {% if day.day != 0 %}{{ day.day }}{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex-1 mt-2 overflow-y-auto space-y-1 max-h-[80px]">
+                        {% for task in day.tasks %}
+                            <a href="{% url 'task_edit' task.id %}" 
+                               class="block text-[10px] truncate px-2 py-1 rounded bg-indigo-600/10 border border-indigo-500/10 text-indigo-400 hover:bg-indigo-600/20 hover:text-indigo-300 transition duration-150 font-medium">
+                                {{ task.title }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

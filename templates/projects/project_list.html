@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Proyectos | GestorPro{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white">Proyectos</h1>
+            <p class="text-zinc-400 text-sm mt-1">Lista de todos tus proyectos actuales y tiempos dedicados.</p>
+        </div>
+        <div>
+            <button onclick="document.getElementById('new-project-modal').showModal()" 
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition duration-200 shadow-md flex items-center space-x-2">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Nuevo Proyecto</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Projects Grid (Full Width) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for project in projects %}
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col justify-between hover:border-zinc-700 transition duration-200 shadow-lg relative group">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition">{{ project.name }}</h3>
+                    
+                    <form action="{% url 'project_delete' project.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este proyecto y todas sus tareas?')">
+                        {% csrf_token %}
+                        <button type="submit" class="text-zinc-500 hover:text-rose-450 hover:bg-rose-500/10 p-2 rounded-lg transition" title="Eliminar proyecto">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed">{{ project.description|default:"Sin descripción." }}</p>
+            </div>
+            
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-800/80 text-xs text-zinc-500 font-medium">
+                <span class="flex items-center">
+                    <i class="fa-solid fa-list-check mr-1.5 text-zinc-600"></i>
+                    {{ project.tasks.all|length }} Tareas
+                </span>
+                <span class="flex items-center font-mono text-indigo-400">
+                    <i class="fa-solid fa-stopwatch mr-1.5 text-zinc-600"></i>
+                    {{ project.total_time_seconds|floatformat:0 }}s acumulados
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full border border-dashed border-zinc-850 rounded-2xl p-16 text-center bg-zinc-900/10">
+            <div class="bg-zinc-900 h-14 w-14 rounded-xl flex items-center justify-center text-zinc-500 mx-auto mb-4">
+                <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-zinc-350">No hay proyectos creados</h3>
+            <p class="text-xs text-zinc-500 mt-1.5">Comienza creando un proyecto para organizar tus tareas y controlar tus tiempos.</p>
+            <button onclick="document.getElementById('new-project-modal').showModal()"
+                    class="mt-5 inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                <span>Crear Primer Proyecto</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Native Accessible Modal Dialog -->
+<dialog id="new-project-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-md w-full focus:outline-none">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-folder-plus text-indigo-500 mr-2.5"></i>
+            Nuevo Proyecto
+        </h3>
+        <button onclick="document.getElementById('new-project-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+    </div>
+    
+    <form action="{% url 'project_list_create' %}" method="POST" class="space-y-5">
+        {% csrf_token %}
+        <div>
+            <label for="name" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Nombre del Proyecto</label>
+            <input type="text" name="name" id="name" required 
+                   class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200" 
+                   placeholder="Ej. Rediseño Web">
+        </div>
+        
+        <div>
+            <label for="description" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Descripción</label>
+            <textarea name="description" id="description" rows="4" 
+                      class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200" 
+                      placeholder="Describe los objetivos de este proyecto..."></textarea>
+        </div>
+        
+        <div class="flex space-x-3 pt-2">
+            <button type="submit" 
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
+                Guardar Proyecto
+            </button>
+            <button type="button" onclick="document.getElementById('new-project-modal').close()"
+                    class="bg-zinc-800 hover:bg-zinc-750 text-zinc-350 font-semibold py-3 px-4 rounded-xl text-sm transition duration-200">
+                Cancelar
+            </button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}

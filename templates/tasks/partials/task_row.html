@@ -1,0 +1,102 @@
+<tr id="task-row-{{ task.id }}" class="border-b border-zinc-800/80 hover:bg-zinc-900/40 transition duration-150">
+    <!-- Task Details -->
+    <td class="px-6 py-4">
+        <div class="space-y-2">
+            <div>
+                <span class="text-sm font-bold text-white block">{{ task.title }}</span>
+                <div class="flex items-center space-x-2 mt-1">
+                    <span class="text-xs text-zinc-500">{{ task.project.name }}</span>
+                    {% if task.category %}
+                    <span class="inline-block w-1.5 h-1.5 rounded-full" style="background-color: {{ task.category.color }}"></span>
+                    <span class="text-[10px] font-semibold tracking-wide uppercase" style="color: {{ task.category.color }}">{{ task.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if task.description %}
+            <div class="markdown-content text-xs text-zinc-400 max-w-2xl leading-relaxed mt-2" data-markdown="{{ task.description }}">
+            </div>
+            {% endif %}
+        </div>
+    </td>
+
+    <!-- Status Badge -->
+    <td class="px-6 py-4">
+        {% if task.status == 'PENDING' %}
+            <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-zinc-850 text-zinc-400 border border-zinc-800">Pendiente</span>
+        {% elif task.status == 'IN_PROGRESS' %}
+            <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse">En Progreso</span>
+        {% else %}
+            <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completada</span>
+        {% endif %}
+    </td>
+
+    <!-- Tags -->
+    <td class="px-6 py-4">
+        <div class="flex flex-wrap gap-1">
+            {% for tag in task.tags.all %}
+            <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg" style="background-color: {{ tag.color }}20; color: {{ tag.color }}; border: 1px solid {{ tag.color }}30;">
+                #{{ tag.name }}
+            </span>
+            {% empty %}
+            <span class="text-zinc-600 text-xs">-</span>
+            {% endfor %}
+        </div>
+    </td>
+
+    <!-- Cumulative Time Spent -->
+    <td class="px-6 py-4 font-mono text-xs text-zinc-400" id="timer-display-{{ task.id }}">
+        {% if task.is_running %}
+        <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1.5 animate-spin" style="animation-duration: 2s;"></i>{{ task.total_time_seconds }}s</span>
+        {% else %}
+        <span><i class="fa-solid fa-stopwatch mr-1.5 text-zinc-700"></i>{{ task.total_time_seconds }}s</span>
+        {% endif %}
+    </td>
+
+    <!-- Markdown file indicator -->
+    <td class="px-6 py-4 text-center">
+        {% if task.attachment %}
+            <a href="{{ task.attachment.url }}" download class="text-indigo-400 hover:text-indigo-300 transition" title="Descargar Markdown adjunto">
+                <i class="fa-solid fa-file-lines text-sm"></i>
+            </a>
+        {% else %}
+            <span class="text-zinc-700">-</span>
+        {% endif %}
+    </td>
+
+    <!-- Action Buttons -->
+    <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
+        {% if task.status != 'COMPLETED' %}
+            {% if not task.is_running %}
+                <button hx-post="{% url 'start_task_timer' task.id %}"
+                        hx-target="#task-row-{{ task.id }}"
+                        hx-swap="outerHTML"
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+            {% else %}
+                <button hx-post="{% url 'stop_task_timer' task.id %}"
+                        hx-target="#task-row-{{ task.id }}"
+                        hx-swap="outerHTML"
+                        class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
+                    <i class="fa-solid fa-pause"></i>
+                </button>
+            {% endif %}
+            <button hx-post="{% url 'finalize_task' task.id %}"
+                    hx-target="#task-row-{{ task.id }}"
+                    hx-swap="outerHTML"
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200"
+                    title="Finalizar tarea">
+                <i class="fa-solid fa-check"></i>
+            </button>
+        {% endif %}
+        <a href="{% url 'task_edit' task.id %}" class="inline-block bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
+            <i class="fa-solid fa-pen"></i>
+        </a>
+        <form action="{% url 'task_delete' task.id %}" method="POST" class="inline-block" onsubmit="return confirm('¿Seguro que deseas eliminar esta tarea?')">
+            {% csrf_token %}
+            <button type="submit" class="bg-zinc-800 hover:bg-rose-600/10 text-zinc-500 hover:text-rose-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200 border border-transparent hover:border-rose-500/20">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </form>
+    </td>
+</tr>

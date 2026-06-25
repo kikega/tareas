@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Tareas | GestorPro{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+    .markdown-content a {
+        color: #818cf8;
+        text-decoration: underline;
+    }
+    .markdown-content a:hover {
+        color: #6366f1;
+    }
+    .markdown-content ul {
+        list-style-type: disc;
+        padding-left: 1rem;
+        margin: 0.5rem 0;
+    }
+    .markdown-content ol {
+        list-style-type: decimal;
+        padding-left: 1rem;
+        margin: 0.5rem 0;
+    }
+    .markdown-content p {
+        margin: 0.25rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white">Tareas</h1>
+            <p class="text-zinc-400 text-sm mt-1">Administra y controla el tiempo de tus tareas activas.</p>
+        </div>
+        <div>
+            <button onclick="document.getElementById('new-task-modal').showModal()" 
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition duration-200 shadow-md flex items-center space-x-2">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Nueva Tarea</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Form (HTMX) -->
+    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
+        <form id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="filter-project" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Filtrar por Proyecto</label>
+                <select name="project" id="filter-project" 
+                        hx-get="{% url 'task_list_create' %}" 
+                        hx-target="#tasks-table-body" 
+                        hx-trigger="change"
+                        hx-include="#filter-form"
+                        class="w-full px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm">
+                    <option value="">Todos los Proyectos</option>
+                    {% for project in projects %}
+                    <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="filter-status" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Filtrar por Estado</label>
+                <select name="status" id="filter-status" 
+                        hx-get="{% url 'task_list_create' %}" 
+                        hx-target="#tasks-table-body" 
+                        hx-trigger="change"
+                        hx-include="#filter-form"
+                        class="w-full px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm">
+                    <option value="">Todos los Estados</option>
+                    <option value="PENDING">Pendiente</option>
+                    <option value="IN_PROGRESS">En Progreso</option>
+                    <option value="COMPLETED">Completada</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tasks Table (Full Width) -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-zinc-800 bg-zinc-950/60 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        <th class="px-6 py-3.5">Detalles de la Tarea</th>
+                        <th class="px-6 py-3.5">Estado</th>
+                        <th class="px-6 py-3.5">Etiquetas</th>
+                        <th class="px-6 py-3.5">Tiempo</th>
+                        <th class="px-6 py-3.5 text-center">Docs</th>
+                        <th class="px-6 py-3.5 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tasks-table-body" class="divide-y divide-zinc-800/40">
+                    {% include 'tasks/partials/task_table.html' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+<dialog id="new-task-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-xl w-full focus:outline-none">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-folder-plus text-indigo-500 mr-2.5"></i>
+            Nueva Tarea
+        </h3>
+        <button onclick="document.getElementById('new-task-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+    </div>
+    
+    <form action="{% url 'task_list_create' %}" method="POST" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+            <label for="title" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Título de la Tarea</label>
+            <input type="text" name="title" id="title" required 
+                   class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200" 
+                   placeholder="Ej. Programar API de login">
+        </div>
+
+        <div>
+            <label for="project" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Proyecto Relacionado</label>
+            <select name="project" id="project" required 
+                    class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200">
+                <option value="">Selecciona un proyecto</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="category" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Categoría</label>
+                <select name="category" id="category" 
+                        class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200">
+                    <option value="">Ninguna</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Etiquetas</label>
+                <div class="h-28 border border-zinc-855 bg-zinc-950 rounded-xl p-3 overflow-y-auto space-y-1.5">
+                    {% for tag in tags %}
+                    <label class="flex items-center space-x-2 text-xs text-zinc-400 cursor-pointer hover:text-zinc-200 transition">
+                        <input type="checkbox" name="tags" value="{{ tag.id }}" class="rounded border-zinc-850 bg-zinc-900 text-indigo-600 focus:ring-indigo-500">
+                        <span>#{{ tag.name }}</span>
+                    </label>
+                    {% empty %}
+                    <span class="text-zinc-650 text-[10px]">No hay etiquetas creadas.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <label for="description" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Descripción (Markdown)</label>
+            <textarea name="description" id="description" rows="4" 
+                      class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 font-mono" 
+                      placeholder="# Detalles de Tarea..."></textarea>
+        </div>
+
+        <div>
+            <label for="attachment" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Adjuntar Archivo (.md)</label>
+            <input type="file" name="attachment" id="attachment" accept=".md"
+                   class="w-full text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-750 cursor-pointer border border-zinc-855 bg-zinc-950 rounded-xl text-xs p-1 focus:outline-none">
+            <span class="text-[10px] text-zinc-600 block mt-1">Únicamente archivos Markdown (.md)</span>
+        </div>
+        
+        <div class="flex space-x-3 pt-2">
+            <button type="submit" 
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
+                Guardar Tarea
+            </button>
+            <button type="button" onclick="document.getElementById('new-task-modal').close()"
+                    class="bg-zinc-800 hover:bg-zinc-750 text-zinc-350 font-semibold py-3 px-4 rounded-xl text-sm transition duration-200">
+                Cancelar
+            </button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    function renderMarkdownContent() {
+        document.querySelectorAll('.markdown-content').forEach(el => {
+            const rawMarkdown = el.getAttribute('data-markdown');
+            if (rawMarkdown) {
+                el.innerHTML = marked.parse(rawMarkdown);
+            }
+        });
+    }
+
+    // Run on initial load
+    window.addEventListener('load', renderMarkdownContent);
+
+    // Run after HTMX table body swaps
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'tasks-table-body') {
+            renderMarkdownContent();
+        }
+    });
+</script>
+{% endblock %}

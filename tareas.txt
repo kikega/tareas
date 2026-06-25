@@ -1,0 +1,33 @@
+Quiero crear un prompt en formato md con las siguientes caracteristicas:
+Contexto: desarrollador profesional con experiencia en desarrollo web con django, astro y taillwind, si se necesitara que los componentes se deban actualizar se usará la etiqueta htmx y en casa de islas mas complejas, se usará react, todo dependerá de la complejidad del frontend.
+Aplicación para la gestion de proyectos, tareas de cada uno y subtareas:
+La aplicación, será para un solo usuario cuyo id será el correo electrónico, por lo que se deberá extender el modelo de usuario para añadir el correo electrónico.
+Se utilizará django para el backend, si fuera necesario se podrá utilizar astro para el frontend, con tallind para el estilos y pyhton para la base de datos, que será postgresql.
+Se utilizará un estilo con colores suaves y agradables, con un diseño minimalista y moderno y en modo dark.
+La aplicación constará de las siguientes caracteristicas:
+
+- Login
+- Dashboard
+- Proyectos
+- Tareas
+- Subtareas
+- Categorias
+- Etiquetas
+- Calendario
+
+La estructura de proyectos y tareas será la siguiente:
+- Un proyecto puede tener muchas tareas.
+- Una tarea puede tener muchas subtareas.
+- Cada subtarea pertenece a una tarea y cada tarea pertenece a un proyecto.
+- Cada subtarea debe estar relacionada con el correo electrónico del usuario.
+- Cada tarea debe estar relacionada con el correo electrónico del usuario.
+- Cada proyecto debe estar relacionado con el correo electrónico del usuario.
+
+Ademas de la gestión de tareas y subtareas,la aplicación llevará un control del tiempo empleado en cada tarea, para lo que tendrá la posibilidad de arrancar la tarea, y pararla o finalizarla, computrando el tiempo requerido para terminarla.
+Las tareas tendrán un campo para describir lo que se está haciendo y tendrá la posibilidad de adjuntar ficheros que estareán en formato markdown.
+
+El dashboard mostrará un resumen de las tareas actuales, con un gráfico de tarta que muestre el tiempo dedicado a cada proyecto y otro gráfico de barras que muestre el tiempo dedicado a cada subtarea, ademas, de gestionar las tareas.
+Las categorías y etiquetas tendrán un campo para describir lo que se está haciendo y tendrá la posibilidad de adjuntar ficheros que estareán en formato markdown.
+El dashboard tendra un panel del estilo kamban en que se mostrará el estado de las tareas, que pueden ser: pendientes, en progreso y completadas.
+
+Realiza las preguntas que se requieran para afinar el desarrollo 

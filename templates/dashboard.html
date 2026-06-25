@@ -1,0 +1,666 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | GestorPro{% endblock %}
+
+{% block head %}
+<!-- React & ReactDOM -->
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<!-- Babel Standalone for JSX compilation -->
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.3/babel.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white">Dashboard Analítico</h1>
+            <p class="text-zinc-400 text-sm mt-1">Resumen del estado del espacio de trabajo y control de tiempo.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            {% if user.is_staff %}
+            <a href="/admin/" target="_blank" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-xl text-sm font-semibold transition duration-200">
+                <i class="fa-solid fa-user-shield mr-2"></i>Administración Django
+            </a>
+            {% endif %}
+            <a href="{% url 'task_list_create' %}" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition duration-200">
+                <i class="fa-solid fa-plus mr-2"></i>Nueva Tarea
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Statistic Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Projects Card -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex items-center space-x-4 hover:border-zinc-700 transition duration-200 shadow-lg">
+            <div class="bg-indigo-600/10 text-indigo-400 p-4 rounded-xl">
+                <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">Proyectos Activos</span>
+                <span class="text-2xl font-bold text-white">{{ total_projects }}</span>
+            </div>
+        </div>
+
+        <!-- Pending Tasks Card -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex items-center space-x-4 hover:border-zinc-700 transition duration-200 shadow-lg">
+            <div class="bg-amber-500/10 text-amber-500 p-4 rounded-xl">
+                <i class="fa-solid fa-clock text-2xl animate-pulse"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">Tareas Pendientes</span>
+                <span class="text-2xl font-bold text-white">{{ pending_tasks }}</span>
+            </div>
+        </div>
+
+        <!-- In Progress Card -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex items-center space-x-4 hover:border-zinc-700 transition duration-200 shadow-lg">
+            <div class="bg-blue-500/10 text-blue-400 p-4 rounded-xl">
+                <i class="fa-solid fa-spinner text-2xl animate-spin" style="animation-duration: 3s;"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">En Progreso</span>
+                <span class="text-2xl font-bold text-white">{{ in_progress_tasks }}</span>
+            </div>
+        </div>
+
+        <!-- Completed Card -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex items-center space-x-4 hover:border-zinc-700 transition duration-200 shadow-lg">
+            <div class="bg-emerald-500/10 text-emerald-400 p-4 rounded-xl">
+                <i class="fa-solid fa-circle-check text-2xl"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">Tareas Completadas</span>
+                <span class="text-2xl font-bold text-white">{{ completed_tasks }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Timer Indicator (Django SSR) -->
+    {% if active_task or active_subtask %}
+    <div class="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            <div class="text-sm">
+                <span class="font-semibold text-amber-500">Temporizador Activo:</span>
+                {% if active_subtask %}
+                    <span class="text-zinc-200">Subtarea: {{ active_subtask.title }} (de Tarea: {{ active_subtask.task.title }})</span>
+                {% else %}
+                    <span class="text-zinc-200">Tarea: {{ active_task.title }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex items-center space-x-3 shrink-0">
+            {% if active_subtask %}
+                <button hx-post="{% url 'stop_subtask_timer' active_subtask.id %}" hx-target="body" class="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition duration-200">
+                    <i class="fa-solid fa-pause mr-1"></i>Pausar Subtarea
+                </button>
+            {% else %}
+                <button hx-post="{% url 'stop_task_timer' active_task.id %}" hx-target="body" class="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition duration-200">
+                    <i class="fa-solid fa-pause mr-1"></i>Pausar Tarea
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Kanban Board Area (React) - Full Width -->
+    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-bold text-white">Tablero Kanban</h3>
+                <p class="text-xs text-zinc-500">Arrastra y suelta tareas para cambiar su estado instantáneamente.</p>
+            </div>
+        </div>
+        
+        <!-- React mount point for Kanban -->
+        <div id="kanban-root" class="min-h-[450px]">
+            <div class="flex justify-center items-center h-[350px]">
+                <div class="text-zinc-500 text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-spinner animate-spin"></i>
+                    <span>Cargando tablero...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytical Charts Area (React) - 3 Columns Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Pie Chart Container: Tiempo por Proyecto -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4">Tiempo por Proyecto</h3>
+            <div class="relative h-[220px] flex items-center justify-center">
+                <canvas id="project-pie-chart"></canvas>
+                <div id="no-project-data" class="hidden text-xs text-zinc-500 absolute text-center">
+                    No hay registros de tiempo en proyectos.
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie Chart Container: Tiempo por Categoría -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4">Tiempo por Categoría</h3>
+            <div class="relative h-[220px] flex items-center justify-center">
+                <canvas id="category-pie-chart"></canvas>
+                <div id="no-category-data" class="hidden text-xs text-zinc-500 absolute text-center">
+                    No hay registros de tiempo en categorías.
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar Chart Container: Tiempo por Subtarea -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4">Tiempo por Subtarea</h3>
+            <div class="relative h-[220px] flex items-center justify-center">
+                <canvas id="subtask-bar-chart"></canvas>
+                <div id="no-subtask-data" class="hidden text-xs text-zinc-500 absolute text-center">
+                    No hay registros de tiempo en subtareas.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More Info / Activity Logs and Detailed Task Lists (Full Width) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Tasks List -->
+        <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl flex flex-col h-[400px]">
+            <div class="flex items-center justify-between shrink-0 mb-4">
+                <h3 class="text-lg font-bold text-white">Detalles y Progreso de Tareas Recientes</h3>
+                <span class="text-xs text-zinc-500 font-semibold px-2 py-0.5 rounded-full bg-zinc-800">Recientes</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                            <th class="pb-3">Tarea</th>
+                            <th class="pb-3">Proyecto</th>
+                            <th class="pb-3 text-center">Progreso Subtareas</th>
+                            <th class="pb-3 text-right">Tiempo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-800/40">
+                        {% for task in recent_tasks %}
+                        <tr class="text-sm border-b border-zinc-850/30">
+                            <td class="py-3.5 pr-3 font-semibold text-zinc-200">
+                                <a href="{% url 'task_edit' task.id %}" class="hover:text-indigo-400 hover:underline transition">
+                                    {{ task.title }}
+                                </a>
+                                {% if task.category %}
+                                <span class="inline-block w-1.5 h-1.5 rounded-full ml-1.5 align-middle" style="background-color: {{ task.category.color }}"></span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3.5 text-zinc-400 font-medium">{{ task.project.name }}</td>
+                            <td class="py-3.5 text-center">
+                                {% if task.total_subtasks_count > 0 %}
+                                    <span class="text-xs text-indigo-400 font-semibold font-mono bg-indigo-500/10 px-2 py-0.5 rounded">
+                                        {{ task.completed_subtasks_count }}/{{ task.total_subtasks_count }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-xs text-zinc-650">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3.5 text-right font-mono text-xs text-zinc-400">
+                                {{ task.total_time_seconds }}s
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="py-6 text-center text-zinc-500 text-xs">No hay tareas creadas aún.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Time Logs / Activity Timeline -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl flex flex-col h-[400px]">
+            <h3 class="text-lg font-bold text-white mb-4 shrink-0">Bitácora de Tiempos Recientes</h3>
+            <div class="flex-1 overflow-y-auto pr-1 space-y-4 relative before:absolute before:inset-y-0 before:left-[15px] before:w-0.5 before:bg-zinc-800/60">
+                {% for log in recent_logs %}
+                <div class="flex items-start relative pl-7 text-xs py-0.5">
+                    <!-- Bullet dot centered exactly on line -->
+                    <div class="absolute left-[10px] top-[4px] w-2.5 h-2.5 rounded-full border-2 bg-zinc-950 {% if log.end_time %}border-zinc-700{% else %}border-amber-500 bg-amber-500/10 animate-ping{% endif %}"></div>
+                    <div class="flex-1 min-w-0 space-y-1">
+                        <div class="flex items-start justify-between gap-2 text-zinc-400">
+                            <span class="font-semibold text-zinc-200 break-words flex-1 min-w-0">
+                                {% if log.task %}
+                                    Tarea: {{ log.task.title }}
+                                {% elif log.subtask %}
+                                    Subtarea: {{ log.subtask.title }}
+                                {% endif %}
+                            </span>
+                            <span class="font-mono text-[10px] text-zinc-500 shrink-0">{{ log.start_time|date:"H:i" }}</span>
+                        </div>
+                        <p class="text-zinc-500 text-[11px] leading-normal flex items-center justify-between">
+                            {% if log.end_time %}
+                                <span>Duración: <span class="font-mono text-zinc-300 font-bold bg-zinc-950 px-1.5 py-0.5 rounded">{{ log.duration_formatted }}</span></span>
+                                <span class="text-[9px] text-zinc-650 font-mono">{{ log.start_time|date:"d M" }}</span>
+                            {% else %}
+                                <span class="text-amber-500 font-semibold animate-pulse"><i class="fa-solid fa-spinner animate-spin mr-1"></i>Corriendo actualmente</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-6 text-zinc-650 text-xs">No hay registros de tiempo históricos.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div> </div>
+</div>
+
+<!-- React & Chart JS script island -->
+<script id="kanban-jsx" type="text/plain">
+    const { useState, useEffect } = React;
+
+    // --- KANBAN BOARD COMPONENT ---
+    function KanbanBoard() {
+        const [tasks, setTasks] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        const fetchTasks = () => {
+            fetch('/api/tasks/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setTasks(data.tasks || []);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.error("Error fetching tasks:", error);
+                    setLoading(false);
+                });
+        };
+
+        useEffect(() => {
+            fetchTasks();
+            // Poll for timer/status changes periodically
+            const interval = setInterval(fetchTasks, 10000);
+            return () => clearInterval(interval);
+        }, []);
+
+        const onDragStart = (e, task) => {
+            e.dataTransfer.setData("text/plain", task.id);
+        };
+
+        const onDragOver = (e) => {
+            e.preventDefault();
+        };
+
+        const onDrop = (e, targetStatus) => {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData("text/plain");
+            
+            // Optimistic UI update
+            const updatedTasks = tasks.map(t => {
+                if (t.id.toString() === taskId) {
+                    return { ...t, status: targetStatus };
+                }
+                return t;
+            });
+            setTasks(updatedTasks);
+
+            fetch(`/api/tasks/${taskId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ status: targetStatus })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.status !== 'success') {
+                    fetchTasks();
+                } else {
+                    fetchTasks();
+                    window.dispatchEvent(new CustomEvent('time-log-updated'));
+                }
+            })
+            .catch(err => {
+                console.error("Error dropping task:", err);
+                fetchTasks();
+            });
+        };
+
+        const formatTime = (secs) => {
+            if (secs === 0) return '0s';
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m ${s}s`;
+            return `${s}s`;
+        };
+
+        if (loading) {
+            return (
+                <div className="flex justify-center items-center h-[300px]">
+                    <div className="text-zinc-500 text-sm flex items-center space-x-2">
+                        <i className="fa-solid fa-spinner animate-spin"></i>
+                        <span>Cargando tareas...</span>
+                    </div>
+                </div>
+            );
+        }
+
+        const columns = [
+            { id: 'PENDING', title: 'Pendientes', colorClass: 'border-zinc-800 bg-zinc-950/40 text-zinc-400' },
+            { id: 'IN_PROGRESS', title: 'En Progreso', colorClass: 'border-amber-500/20 bg-amber-500/5 text-amber-500' },
+            { id: 'COMPLETED', title: 'Completadas', colorClass: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-500' }
+        ];
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                {columns.map(col => {
+                    const colTasks = tasks.filter(t => t.status === col.id);
+                    return (
+                        <div 
+                            key={col.id} 
+                            onDragOver={onDragOver}
+                            onDrop={(e) => onDrop(e, col.id)}
+                            className={`border rounded-2xl p-4 flex flex-col h-[520px] ${col.colorClass}`}
+                        >
+                            {/* Header Column */}
+                            <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-2 shrink-0">
+                                <span className="text-sm font-bold text-zinc-250">{col.title}</span>
+                                <span className="text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full font-medium">{colTasks.length}</span>
+                            </div>
+
+                            {/* Tasks list */}
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                                {colTasks.length === 0 ? (
+                                    <div className="flex-1 border border-dashed border-zinc-800/80 rounded-xl flex items-center justify-center p-8 text-center">
+                                        <span className="text-xs text-zinc-650">Suelta tareas aquí</span>
+                                    </div>
+                                ) : (
+                                    colTasks.map(task => (
+                                        <div
+                                            key={task.id}
+                                            draggable
+                                            onDragStart={(e) => onDragStart(e, task)}
+                                            className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-4 rounded-xl cursor-grab active:cursor-grabbing transition duration-200 shadow-md flex flex-col gap-2 relative group"
+                                        >
+                                            {task.is_running && (
+                                                <div className="absolute top-2 right-2 flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider truncate max-w-[100px]">{task.project}</span>
+                                                <div className="flex flex-wrap items-center gap-1 justify-end min-w-0">
+                                                    {task.category && (
+                                                        <span 
+                                                            className="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
+                                                            style={{ 
+                                                                backgroundColor: `${task.category_color}15`, 
+                                                                color: task.category_color,
+                                                                border: `1px solid ${task.category_color}30`
+                                                            }}
+                                                        >
+                                                            {task.category}
+                                                        </span>
+                                                    )}
+                                                    {task.tags && task.tags.map(t => (
+                                                        <span 
+                                                            key={t.name}
+                                                            className="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
+                                                            style={{ 
+                                                                backgroundColor: `${t.color}15`, 
+                                                                color: t.color,
+                                                                border: `1px solid ${t.color}30`
+                                                            }}
+                                                        >
+                                                            {t.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="text-sm font-bold text-zinc-100 group-hover:text-indigo-400 transition-colors duration-200 line-clamp-2">{task.title}</div>
+                                            
+                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-500">
+                                                <span className="font-mono flex items-center text-zinc-400">
+                                                    <i className="fa-solid fa-stopwatch mr-1.5 text-zinc-650"></i>
+                                                    {formatTime(task.time_spent_secs)}
+                                                </span>
+                                                <a href={`/tasks/${task.id}/edit/`} className="text-indigo-400 hover:underline flex items-center">
+                                                    <i className="fa-solid fa-pen-to-square mr-1"></i> Editar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    const container = document.getElementById('kanban-root');
+    if (ReactDOM.createRoot) {
+        const root = ReactDOM.createRoot(container);
+        root.render(<KanbanBoard />);
+    } else {
+        ReactDOM.render(<KanbanBoard />, container);
+    }
+</script>
+
+<script>
+    // Manual Babel compiler execution
+    window.addEventListener('load', function() {
+        const container = document.getElementById('kanban-root');
+        try {
+            console.log("Starting manual Babel compilation...");
+            const jsxCode = document.getElementById('kanban-jsx').textContent;
+            
+            if (typeof Babel === 'undefined') {
+                throw new Error("Babel is not defined. Babel Standalone script failed to load.");
+            }
+            if (typeof React === 'undefined') {
+                throw new Error("React is not defined. React script failed to load.");
+            }
+            if (typeof ReactDOM === 'undefined') {
+                throw new Error("ReactDOM is not defined. ReactDOM script failed to load.");
+            }
+            
+            console.log("Compiling JSX code...");
+            const compiledCode = Babel.transform(jsxCode, {
+                presets: ['react', 'env']
+            }).code;
+            
+            console.log("Executing compiled React code...");
+            const script = document.createElement('script');
+            script.text = compiledCode;
+            document.body.appendChild(script);
+            console.log("Kanban board loaded successfully!");
+        } catch (error) {
+            console.error("Kanban Board Error:", error);
+            container.innerHTML = `
+                <div class="p-6 bg-rose-950/20 border border-rose-500/30 rounded-2xl text-rose-400 text-xs space-y-2 max-w-xl mx-auto mt-10">
+                    <div class="font-bold text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+                        Error al cargar el Tablero Kanban
+                    </div>
+                    <p class="text-zinc-400">Hubo un fallo en la compilación o ejecución del componente React:</p>
+                    <pre class="bg-zinc-950 p-3 rounded font-mono text-[10px] text-zinc-300 overflow-x-auto whitespace-pre-wrap">${error.stack || error.message}</pre>
+                </div>
+            `;
+        }
+    });
+</script>
+
+<script>
+
+
+    // --- CHART MANAGEMENT ---
+    let projectChart = null;
+    let categoryChart = null;
+    let subtaskChart = null;
+
+    async function loadCharts() {
+        try {
+            const response = await fetch('/api/dashboard/charts-data/');
+            const data = await response.json();
+
+            // 1. PROJECT PIE CHART
+            const pieCtx = document.getElementById('project-pie-chart').getContext('2d');
+            const hasProjectData = data.project_times.length > 0;
+            
+            document.getElementById('no-project-data').classList.toggle('hidden', hasProjectData);
+            
+            if (projectChart) {
+                projectChart.destroy();
+            }
+
+            if (hasProjectData) {
+                projectChart = new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.project_times.map(d => d.name),
+                        datasets: [{
+                            data: data.project_times.map(d => d.value),
+                            backgroundColor: [
+                                '#6366f1', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'
+                            ],
+                            borderColor: '#18181b',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#a1a1aa', font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.label}: ${context.raw}h`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. CATEGORY PIE CHART
+            const catCtx = document.getElementById('category-pie-chart').getContext('2d');
+            const hasCategoryData = data.category_times.length > 0;
+            
+            document.getElementById('no-category-data').classList.toggle('hidden', hasCategoryData);
+            
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            if (hasCategoryData) {
+                categoryChart = new Chart(catCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.category_times.map(d => d.name),
+                        datasets: [{
+                            data: data.category_times.map(d => d.value),
+                            backgroundColor: data.category_times.map(d => d.color || '#6366f1'),
+                            borderColor: '#18181b',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#a1a1aa', font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.label}: ${context.raw}h`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. SUBTASK BAR CHART
+            const barCtx = document.getElementById('subtask-bar-chart').getContext('2d');
+            const hasSubtaskData = data.subtask_times.length > 0;
+            
+            document.getElementById('no-subtask-data').classList.toggle('hidden', hasSubtaskData);
+
+            if (subtaskChart) {
+                subtaskChart.destroy();
+            }
+
+            if (hasSubtaskData) {
+                subtaskChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.subtask_times.map(d => d.name),
+                        datasets: [{
+                            label: 'Minutos',
+                            data: data.subtask_times.map(d => d.value),
+                            backgroundColor: '#6366f1',
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                grid: { color: '#27272a' },
+                                ticks: { color: '#a1a1aa' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#a1a1aa' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Error building charts:", err);
+        }
+    }
+
+    // Load initially and when requested
+    window.addEventListener('load', loadCharts);
+    window.addEventListener('time-log-updated', loadCharts);
+    
+    // Auto-update charts occasionally
+    setInterval(loadCharts, 15000);
+</script>
+{% endblock %}

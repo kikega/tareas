@@ -154,13 +154,13 @@
             </div>
         </div>
 
-        <!-- Bar Chart Container: Tiempo por Subtarea -->
+        <!-- Bar Chart Container: Tiempo por Tarea -->
         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
-            <h3 class="text-lg font-bold text-white mb-4">Tiempo por Subtarea</h3>
+            <h3 class="text-lg font-bold text-white mb-4">Tiempo por Tarea</h3>
             <div class="relative h-[220px] flex items-center justify-center">
-                <canvas id="subtask-bar-chart"></canvas>
-                <div id="no-subtask-data" class="hidden text-xs text-zinc-500 absolute text-center">
-                    No hay registros de tiempo en subtareas.
+                <canvas id="task-bar-chart"></canvas>
+                <div id="no-task-data" class="hidden text-xs text-zinc-500 absolute text-center">
+                    No hay registros de tiempo en tareas.
                 </div>
             </div>
         </div>
@@ -610,24 +610,24 @@
                 });
             }
 
-            // 3. SUBTASK BAR CHART
-            const barCtx = document.getElementById('subtask-bar-chart').getContext('2d');
-            const hasSubtaskData = data.subtask_times.length > 0;
+            // 3. TASK BAR CHART
+            const barCtx = document.getElementById('task-bar-chart').getContext('2d');
+            const hasTaskData = data.task_times.length > 0;
             
-            document.getElementById('no-subtask-data').classList.toggle('hidden', hasSubtaskData);
+            document.getElementById('no-task-data').classList.toggle('hidden', hasTaskData);
 
             if (subtaskChart) {
                 subtaskChart.destroy();
             }
 
-            if (hasSubtaskData) {
+            if (hasTaskData) {
                 subtaskChart = new Chart(barCtx, {
                     type: 'bar',
                     data: {
-                        labels: data.subtask_times.map(d => d.name),
+                        labels: data.task_times.map(d => d.name),
                         datasets: [{
                             label: 'Minutos',
-                            data: data.subtask_times.map(d => d.value),
+                            data: data.task_times.map(d => d.value),
                             backgroundColor: '#6366f1',
                             borderRadius: 6,
                         }]

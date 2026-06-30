@@ -74,3 +74,57 @@ class ProjectManagementTests(TestCase):
         self.assertEqual(task.status, "COMPLETED")
         # Total time should be 120 + 30 = 150 seconds
         self.assertEqual(task.total_time_seconds, 150)
+
+    def test_subtask_time_tracking_aggregation(self):
+        """Verify that starting a subtask timer counts time towards the parent task and project, changes status, and updates charts api."""
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea principal",
+            status="PENDING"
+        )
+        subtask = Subtask.objects.create(
+            user=self.user,
+            task=task,
+            title="Subtarea de prueba",
+            is_completed=False
+        )
+        
+        # 1. Start subtask timer
+        subtask.start_timer()
+        
+        # Verify log association
+        self.assertTrue(subtask.is_running)
+        active_log = subtask.time_logs.filter(end_time__isnull=True).first()
+        self.assertIsNotNone(active_log)
+        self.assertEqual(active_log.task, task)
+        self.assertEqual(active_log.subtask, subtask)
+        
+        # Verify task status changed to IN_PROGRESS
+        task.refresh_from_db()
+        self.assertEqual(task.status, "IN_PROGRESS")
+        
+        # Simulate 300 seconds elapsed
+        active_log.start_time = timezone.now() - datetime.timedelta(seconds=300)
+        active_log.save()
+        
+        # Stop subtask timer
+        subtask.stop_timer()
+        self.assertFalse(subtask.is_running)
+        
+        # Verify time is reflected in task and project
+        self.assertEqual(subtask.total_time_seconds, 300)
+        self.assertEqual(task.total_time_seconds, 300)
+        self.assertEqual(self.project.total_time_seconds, 300)
+        
+        # Verify charts API output
+        self.client.force_login(self.user)
+        response = self.client.get('/api/dashboard/charts-data/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        
+        # Check task_times exists and contains the correct consolidated task time in minutes
+        self.assertIn('task_times', data)
+        task_data = next((item for item in data['task_times'] if item['name'] == task.title), None)
+        self.assertIsNotNone(task_data)
+        self.assertEqual(task_data['value'], 5.0) # 300s = 5m

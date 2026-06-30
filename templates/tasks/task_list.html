@@ -93,7 +93,11 @@
                         <th class="px-6 py-3.5 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="tasks-table-body" class="divide-y divide-zinc-800/40">
+                <tbody id="tasks-table-body" 
+                       hx-get="{% url 'task_list_create' %}"
+                       hx-trigger="time-log-updated from:body"
+                       hx-include="#filter-form"
+                       class="divide-y divide-zinc-800/40">
                     {% include 'tasks/partials/task_table.html' %}
                 </tbody>
             </table>

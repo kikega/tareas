@@ -304,7 +304,9 @@ def subtask_toggle(request, pk):
     subtask.is_completed = not subtask.is_completed
     subtask.save()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response = render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_edit', pk=subtask.task.id)
 
 @login_required
@@ -314,7 +316,9 @@ def subtask_delete(request, pk):
     task_id = subtask.task.id
     subtask.delete()
     if request.headers.get('HX-Request'):
-        return HttpResponse("")
+        response = HttpResponse("")
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_edit', pk=task_id)
 
 # --- CATEGORIES & TAGS ---
@@ -377,7 +381,9 @@ def start_task_timer(request, task_id):
     
     # If the request comes from HTMX, return just the row.
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/task_row.html', {'task': task})
+        response = render(request, 'tasks/partials/task_row.html', {'task': task})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_list_create')
 
 @login_required
@@ -386,7 +392,9 @@ def stop_task_timer(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     task.stop_timer()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/task_row.html', {'task': task})
+        response = render(request, 'tasks/partials/task_row.html', {'task': task})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_list_create')
 
 @login_required
@@ -395,7 +403,9 @@ def finalize_task(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     task.finalize_timer()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/task_row.html', {'task': task})
+        response = render(request, 'tasks/partials/task_row.html', {'task': task})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_list_create')
 
 @login_required
@@ -405,7 +415,9 @@ def start_subtask_timer(request, subtask_id):
     subtask = get_object_or_404(Subtask, id=subtask_id, user=request.user)
     subtask.start_timer()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response = render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_edit', pk=subtask.task.id)
 
 @login_required
@@ -414,7 +426,9 @@ def stop_subtask_timer(request, subtask_id):
     subtask = get_object_or_404(Subtask, id=subtask_id, user=request.user)
     subtask.stop_timer()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response = render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_edit', pk=subtask.task.id)
 
 @login_required
@@ -423,7 +437,9 @@ def finalize_subtask(request, subtask_id):
     subtask = get_object_or_404(Subtask, id=subtask_id, user=request.user)
     subtask.finalize_timer()
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response = render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+        response['HX-Trigger'] = 'time-log-updated'
+        return response
     return redirect('task_edit', pk=subtask.task.id)
 
 
@@ -442,14 +458,14 @@ def charts_data_api(request):
                 'seconds': secs
             })
             
-    # 2. Bar chart: Time dedicated per Subtask
-    subtasks = Subtask.objects.filter(user=request.user).prefetch_related('time_logs')
+    # 2. Bar chart: Time dedicated per Task
+    tasks = Task.objects.filter(user=request.user).prefetch_related('time_logs')
     bar_data = []
-    for subtask in subtasks:
-        secs = subtask.total_time_seconds
+    for task in tasks:
+        secs = task.total_time_seconds
         if secs > 0:
             bar_data.append({
-                'name': subtask.title,
+                'name': task.title,
                 'value': round(secs / 60.0, 2),  # Time in minutes
                 'seconds': secs
             })
@@ -471,6 +487,7 @@ def charts_data_api(request):
 
     return JsonResponse({
         'project_times': pie_data,
+        'task_times': bar_data,
         'subtask_times': bar_data,
         'category_times': category_data
     })

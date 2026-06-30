@@ -16,6 +16,24 @@
             <div class="markdown-content text-xs text-zinc-400 max-w-2xl leading-relaxed mt-2" data-markdown="{{ task.description }}">
             </div>
             {% endif %}
+            
+            {% if task.subtasks.exists %}
+            <div class="mt-3" onclick="event.stopPropagation()">
+                <details class="group">
+                    <summary class="flex items-center space-x-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer select-none">
+                        <span class="transition-transform duration-200 group-open:rotate-90">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </span>
+                        <span>Subtareas ({{ task.completed_subtasks_count }}/{{ task.total_subtasks_count }})</span>
+                    </summary>
+                    <div class="mt-2.5 pl-2 space-y-2.5 max-w-xl">
+                        {% for subtask in task.subtasks.all %}
+                            {% include 'tasks/partials/subtask_item.html' %}
+                        {% endfor %}
+                    </div>
+                </details>
+            </div>
+            {% endif %}
         </div>
     </td>
 

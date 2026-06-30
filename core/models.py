@@ -202,7 +202,10 @@ class Subtask(models.Model):
 
     def start_timer(self):
         if not self.is_running:
-            TimeLog.objects.create(user=self.user, subtask=self, start_time=timezone.now())
+            if self.task.status == 'PENDING':
+                self.task.status = 'IN_PROGRESS'
+                self.task.save()
+            TimeLog.objects.create(user=self.user, subtask=self, task=self.task, start_time=timezone.now())
 
     def stop_timer(self):
         active_log = self.time_logs.filter(end_time__isnull=True).first()

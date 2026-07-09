@@ -1,0 +1,95 @@
+<div class="flex justify-between items-center mb-6">
+    <div class="space-y-1">
+        <h3 class="text-xl font-bold text-white flex items-center">
+            <i class="fa-solid fa-folder-open text-indigo-500 mr-2.5"></i>
+            {{ project.name }}
+        </h3>
+        {% if project.description %}
+        <p class="text-xs text-zinc-400 max-w-xl leading-relaxed">{{ project.description }}</p>
+        {% else %}
+        <p class="text-xs text-zinc-550 italic">Sin descripción.</p>
+        {% endif %}
+    </div>
+    <button onclick="document.getElementById('project-tasks-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition p-1.5 hover:bg-zinc-800 rounded-lg">
+        <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    <div class="bg-zinc-950/50 border border-zinc-800/80 p-3 rounded-xl text-center">
+        <span class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Tareas</span>
+        <span class="text-lg font-extrabold text-white mt-1 block">{{ project.total_tasks_count }}</span>
+    </div>
+    <div class="bg-zinc-950/50 border border-zinc-800/80 p-3 rounded-xl text-center">
+        <span class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Pendientes</span>
+        <span class="text-lg font-extrabold text-zinc-400 mt-1 block">{{ project.pending_tasks_count }}</span>
+    </div>
+    <div class="bg-zinc-950/50 border border-zinc-800/80 p-3 rounded-xl text-center">
+        <span class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">En Progreso</span>
+        <span class="text-lg font-extrabold text-amber-500 mt-1 block">{{ project.in_progress_tasks_count }}</span>
+    </div>
+    <div class="bg-zinc-950/50 border border-zinc-800/80 p-3 rounded-xl text-center">
+        <span class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Completadas</span>
+        <span class="text-lg font-extrabold text-emerald-400 mt-1 block">{{ project.completed_tasks_count }}</span>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="space-y-2 mb-6">
+    <div class="flex items-center justify-between text-xs font-semibold">
+        <span class="text-zinc-400">Progreso del proyecto</span>
+        <span class="text-indigo-400">{{ project.progress_percentage }}%</span>
+    </div>
+    <div class="w-full bg-zinc-950 rounded-full h-2.5 border border-zinc-850 overflow-hidden">
+        <div class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: {{ project.progress_percentage }}%"></div>
+    </div>
+</div>
+
+<!-- Quick Add Form (HTMX) -->
+<div class="mb-6">
+    <form hx-post="{% url 'project_quick_add_task' project.id %}" 
+          hx-target="#project-tasks-modal-content"
+          class="flex flex-col sm:flex-row gap-2.5 p-3 bg-zinc-950/70 border border-zinc-850 rounded-xl">
+        {% csrf_token %}
+        <div class="flex-1 flex items-center space-x-2 px-2">
+            <i class="fa-solid fa-plus text-zinc-650 text-sm"></i>
+            <input type="text" name="title" required placeholder="Añadir una tarea rápidamente..." autofocus
+                   class="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-700 border-none outline-none focus:ring-0 focus:outline-none">
+        </div>
+        <button type="submit" 
+                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-xs transition duration-200 shadow-md">
+            Crear Tarea
+        </button>
+    </form>
+</div>
+
+<!-- Tasks Table -->
+<div class="border border-zinc-800 rounded-xl overflow-hidden shadow-lg bg-zinc-900/30 max-h-96 overflow-y-auto">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b border-zinc-800 bg-zinc-950/80 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                <th class="px-5 py-3">Detalle</th>
+                <th class="px-5 py-3">Estado</th>
+                <th class="px-5 py-3">Etiquetas</th>
+                <th class="px-5 py-3">Tiempo</th>
+                <th class="px-5 py-3 text-center">Docs</th>
+                <th class="px-5 py-3 text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800/40">
+            {% for task in tasks %}
+                {% include 'tasks/partials/task_row.html' %}
+            {% empty %}
+            <tr>
+                <td colspan="6" class="px-6 py-10 text-center text-zinc-500 text-sm">
+                    <div class="flex flex-col items-center justify-center space-y-2">
+                        <i class="fa-solid fa-clipboard-list text-xl text-zinc-650"></i>
+                        <span>No hay tareas en este proyecto. ¡Crea la primera arriba!</span>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

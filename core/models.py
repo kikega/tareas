@@ -96,6 +96,29 @@ class Project(models.Model):
             total += task.total_time_seconds
         return total
 
+    @property
+    def completed_tasks_count(self):
+        return self.tasks.filter(status='COMPLETED').count()
+
+    @property
+    def total_tasks_count(self):
+        return self.tasks.count()
+
+    @property
+    def progress_percentage(self):
+        total = self.total_tasks_count
+        if total == 0:
+            return 0
+        return int((self.completed_tasks_count / total) * 100)
+
+    @property
+    def pending_tasks_count(self):
+        return self.tasks.filter(status='PENDING').count()
+
+    @property
+    def in_progress_tasks_count(self):
+        return self.tasks.filter(status='IN_PROGRESS').count()
+
 class Task(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pendiente'),

@@ -177,6 +177,59 @@ def project_delete(request, pk):
     messages.success(request, "Proyecto eliminado.")
     return redirect('project_list_create')
 
+@login_required
+def project_edit(request, pk):
+    project = get_object_or_404(Project, pk=pk, user=request.user)
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        if name:
+            project.name = name
+            project.description = description
+            project.save()
+            messages.success(request, "Proyecto actualizado con éxito.")
+        else:
+            messages.error(request, "El nombre del proyecto es obligatorio.")
+    return redirect('project_list_create')
+
+@login_required
+def project_tasks_modal(request, pk):
+    project = get_object_or_404(Project, pk=pk, user=request.user)
+    tasks = project.tasks.all().select_related('category').prefetch_related('tags', 'time_logs').order_by('-created_at')
+    categories = Category.objects.filter(user=request.user)
+    tags = Tag.objects.filter(user=request.user)
+    context = {
+        'project': project,
+        'tasks': tasks,
+        'categories': categories,
+        'tags': tags,
+    }
+    return render(request, 'projects/partials/project_tasks_modal_content.html', context)
+
+@login_required
+@require_POST
+def project_quick_add_task(request, pk):
+    project = get_object_or_404(Project, pk=pk, user=request.user)
+    title = request.POST.get('title')
+    if title:
+        Task.objects.create(
+            user=request.user,
+            project=project,
+            title=title,
+            status='PENDING'
+        )
+    
+    tasks = project.tasks.all().select_related('category').prefetch_related('tags', 'time_logs').order_by('-created_at')
+    categories = Category.objects.filter(user=request.user)
+    tags = Tag.objects.filter(user=request.user)
+    context = {
+        'project': project,
+        'tasks': tasks,
+        'categories': categories,
+        'tags': tags,
+    }
+    return render(request, 'projects/partials/project_tasks_modal_content.html', context)
+
 # --- TASKS CRUD ---
 @login_required
 def task_list_create(request):
@@ -283,6 +336,9 @@ def task_delete(request, pk):
     task = get_object_or_404(Task, pk=pk, user=request.user)
     task.delete()
     messages.success(request, "Tarea eliminada.")
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('task_list_create')
 
 # --- SUBTASKS ---

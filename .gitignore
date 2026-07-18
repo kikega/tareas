@@ -11,7 +11,14 @@ wheels/
 
 # Entorno
 .env
+.env.production
 __pycache__/
 *.pyc
 .venv/
 db.sqlite3
+
+# Static files collected for production
+staticfiles/
+
+# Logs
+logs/

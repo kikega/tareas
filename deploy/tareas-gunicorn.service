@@ -1,0 +1,16 @@
+[Unit]
+Description=tareas gunicorn daemon
+After=network.target
+
+[Service]
+User=kike
+Group=kike
+WorkingDirectory=/home/kike/tareas
+EnvironmentFile=/home/kike/tareas/.env
+ExecStart=/home/kike/tareas/.venv/bin/gunicorn tareas.wsgi:application \
+    --config /home/kike/tareas/gunicorn.conf.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

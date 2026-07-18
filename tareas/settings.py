@@ -46,6 +46,9 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "core.User"
+LOGIN_URL = "login"
+SESSION_COOKIE_AGE = 31536000
+SESSION_SAVE_EVERY_REQUEST = True
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

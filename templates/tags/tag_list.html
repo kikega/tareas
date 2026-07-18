@@ -12,7 +12,7 @@
         </div>
         <div>
             <button onclick="document.getElementById('new-tag-modal').showModal()" 
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition duration-200 shadow-md flex items-center space-x-2">
+                    class="bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition duration-200 shadow-md flex items-center space-x-2">
                 <i class="fa-solid fa-plus text-xs"></i>
                 <span>Nueva Etiqueta</span>
             </button>
@@ -45,7 +45,7 @@
                 </p>
                 
                 {% if tag.attachment %}
-                <div class="flex items-center text-[10px] text-indigo-405 pt-1">
+                <div class="flex items-center text-[10px] text-brand-405 pt-1">
                     <i class="fa-solid fa-file-arrow-down mr-1.5"></i>
                     <a href="{{ tag.attachment.url }}" download class="hover:underline font-semibold">Descargar Adjunto</a>
                 </div>
@@ -60,7 +60,7 @@
             <h3 class="text-base font-semibold text-zinc-350">No hay etiquetas</h3>
             <p class="text-xs text-zinc-500 mt-1.5">Las etiquetas te permiten marcar y organizar tareas de forma cruzada (ej: "urgente", "revisión", "bug").</p>
             <button onclick="document.getElementById('new-tag-modal').showModal()"
-                    class="mt-5 inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition">
+                    class="mt-5 inline-flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition">
                 <i class="fa-solid fa-plus text-[10px]"></i>
                 <span>Crear Primera Etiqueta</span>
             </button>
@@ -73,7 +73,7 @@
 <dialog id="new-tag-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-md w-full focus:outline-none">
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-lg font-bold text-white flex items-center">
-            <i class="fa-solid fa-folder-plus text-indigo-500 mr-2.5"></i>
+            <i class="fa-solid fa-folder-plus text-brand-500 mr-2.5"></i>
             Nueva Etiqueta
         </h3>
         <button onclick="document.getElementById('new-tag-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition">
@@ -86,7 +86,7 @@
         <div>
             <label for="name" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Nombre de la Etiqueta</label>
             <input type="text" name="name" id="name" required 
-                   class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200" 
+                   class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200" 
                    placeholder="Ej. urgente">
         </div>
 
@@ -102,7 +102,7 @@
         <div>
             <label for="description" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Descripción (Markdown)</label>
             <textarea name="description" id="description" rows="4" 
-                      class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-200 font-mono" 
+                      class="w-full px-4 py-3 border border-zinc-855 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200 font-mono" 
                       placeholder="# Notas de Etiqueta&#10;Describe cuándo usar..."></textarea>
         </div>
 
@@ -115,7 +115,7 @@
         
         <div class="flex space-x-3 pt-2">
             <button type="submit" 
-                    class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
+                    class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
                 Guardar Etiqueta
             </button>
             <button type="button" onclick="document.getElementById('new-tag-modal').close()"

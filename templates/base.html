@@ -13,17 +13,17 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
-                            950: '#1e1b4b',
+                            50: '#ECFEFF',
+                            100: '#CEFAFE',
+                            200: '#A2F4FD',
+                            300: '#53EAFD',
+                            400: '#42D3F2',
+                            500: '#3BB8DB',
+                            600: '#2C92B8',
+                            700: '#1A7595',
+                            800: '#015F78',
+                            900: '#104E64',
+                            950: '#053345',
                         }
                     }
                 }
@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     {% block head %}{% endblock %}
 </head>
-<body class="h-full flex flex-col md:flex-row bg-zinc-950 font-sans" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="h-full flex flex-col md:flex-row bg-zinc-950 font-sans">
 
     {% if user.is_authenticated %}
     <!-- Sidebar Navigation -->
@@ -45,7 +45,7 @@
             <!-- Logo / Header -->
             <div class="p-6 border-b border-zinc-800 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <div class="bg-brand-600 p-2 rounded-lg text-white">
                         <i class="fa-solid fa-layer-group text-lg"></i>
                     </div>
                     <span class="text-xl font-bold tracking-tight text-white">GestorPro</span>
@@ -54,27 +54,27 @@
             
             <!-- Navigation Links -->
             <nav class="p-4 space-y-1">
-                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if request.resolver_match.url_name == 'dashboard' %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if request.resolver_match.url_name == 'dashboard' %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-chart-line w-5"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{% url 'project_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'project' in request.resolver_match.url_name %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'project_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'project' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-folder-open w-5"></i>
                     <span>Proyectos</span>
                 </a>
-                <a href="{% url 'task_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'task' in request.resolver_match.url_name and 'edit' not in request.resolver_match.url_name %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'task_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'task' in request.resolver_match.url_name and 'edit' not in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-list-check w-5"></i>
                     <span>Tareas</span>
                 </a>
-                <a href="{% url 'calendar' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if request.resolver_match.url_name == 'calendar' %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'calendar' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if request.resolver_match.url_name == 'calendar' %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-calendar-days w-5"></i>
                     <span>Calendario</span>
                 </a>
-                <a href="{% url 'category_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'category' in request.resolver_match.url_name %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'category_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'category' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-tags w-5"></i>
                     <span>Categorías</span>
                 </a>
-                <a href="{% url 'tag_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'tag' in request.resolver_match.url_name %}bg-indigo-600/10 text-indigo-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                <a href="{% url 'tag_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'tag' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
                     <i class="fa-solid fa-hashtag w-5"></i>
                     <span>Etiquetas</span>
                 </a>
@@ -129,9 +129,22 @@
 
     <!-- Configure HTMX request details -->
     <script>
+        function getCsrfToken() {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, 10) === 'csrftoken=') {
+                        cookieValue = decodeURIComponent(cookie.substring(10));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
         document.body.addEventListener('htmx:configRequest', (event) => {
-            // This is double-checked via hx-headers but serves as a backup fallback
-            const csrfToken = '{{ csrf_token }}';
+            const csrfToken = getCsrfToken();
             if (csrfToken) {
                 event.detail.headers['X-CSRFToken'] = csrfToken;
             }

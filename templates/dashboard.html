@@ -26,7 +26,7 @@
                 <i class="fa-solid fa-user-shield mr-2"></i>Administración Django
             </a>
             {% endif %}
-            <a href="{% url 'task_list_create' %}" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition duration-200">
+            <a href="{% url 'task_list_create' %}" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition duration-200">
                 <i class="fa-solid fa-plus mr-2"></i>Nueva Tarea
             </a>
         </div>
@@ -36,7 +36,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Projects Card -->
         <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex items-center space-x-4 hover:border-zinc-700 transition duration-200 shadow-lg">
-            <div class="bg-indigo-600/10 text-indigo-400 p-4 rounded-xl">
+            <div class="bg-brand-600/10 text-brand-400 p-4 rounded-xl">
                 <i class="fa-solid fa-folder-open text-2xl"></i>
             </div>
             <div>
@@ -189,7 +189,7 @@
                         {% for task in recent_tasks %}
                         <tr class="text-sm border-b border-zinc-850/30">
                             <td class="py-3.5 pr-3 font-semibold text-zinc-200">
-                                <a href="{% url 'task_edit' task.id %}" class="hover:text-indigo-400 hover:underline transition">
+                                <a href="{% url 'task_edit' task.id %}" class="hover:text-brand-400 hover:underline transition">
                                     {{ task.title }}
                                 </a>
                                 {% if task.category %}
@@ -199,7 +199,7 @@
                             <td class="py-3.5 text-zinc-400 font-medium">{{ task.project.name }}</td>
                             <td class="py-3.5 text-center">
                                 {% if task.total_subtasks_count > 0 %}
-                                    <span class="text-xs text-indigo-400 font-semibold font-mono bg-indigo-500/10 px-2 py-0.5 rounded">
+                                    <span class="text-xs text-brand-400 font-semibold font-mono bg-brand-500/10 px-2 py-0.5 rounded">
                                         {{ task.completed_subtasks_count }}/{{ task.total_subtasks_count }}
                                     </span>
                                 {% else %}
@@ -316,7 +316,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify({ status: targetStatus })
             })
@@ -436,14 +436,14 @@
                                                 </div>
                                             </div>
 
-                                            <div className="text-sm font-bold text-zinc-100 group-hover:text-indigo-400 transition-colors duration-200 line-clamp-2">{task.title}</div>
+                                            <div className="text-sm font-bold text-zinc-100 group-hover:text-brand-400 transition-colors duration-200 line-clamp-2">{task.title}</div>
                                             
                                             <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-500">
                                                 <span className="font-mono flex items-center text-zinc-400">
                                                     <i className="fa-solid fa-stopwatch mr-1.5 text-zinc-650"></i>
                                                     {formatTime(task.time_spent_secs)}
                                                 </span>
-                                                <a href={`/tasks/${task.id}/edit/`} className="text-indigo-400 hover:underline flex items-center">
+                                                <a href={`/tasks/${task.id}/edit/`} className="text-brand-400 hover:underline flex items-center">
                                                     <i className="fa-solid fa-pen-to-square mr-1"></i> Editar
                                                 </a>
                                             </div>
@@ -542,7 +542,7 @@
                         datasets: [{
                             data: data.project_times.map(d => d.value),
                             backgroundColor: [
-                                '#6366f1', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'
+                                '#2C92B8', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'
                             ],
                             borderColor: '#18181b',
                             borderWidth: 2
@@ -585,7 +585,7 @@
                         labels: data.category_times.map(d => d.name),
                         datasets: [{
                             data: data.category_times.map(d => d.value),
-                            backgroundColor: data.category_times.map(d => d.color || '#6366f1'),
+                            backgroundColor: data.category_times.map(d => d.color || '#2C92B8'),
                             borderColor: '#18181b',
                             borderWidth: 2
                         }]
@@ -628,7 +628,7 @@
                         datasets: [{
                             label: 'Minutos',
                             data: data.task_times.map(d => d.value),
-                            backgroundColor: '#6366f1',
+                            backgroundColor: '#2C92B8',
                             borderRadius: 6,
                         }]
                     },

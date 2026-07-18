@@ -51,7 +51,7 @@
                     <div class="flex-1 mt-2 overflow-y-auto space-y-1 max-h-[80px]">
                         {% for task in day.tasks %}
                             <a href="{% url 'task_edit' task.id %}" 
-                               class="block text-[10px] truncate px-2 py-1 rounded bg-indigo-600/10 border border-indigo-500/10 text-indigo-400 hover:bg-indigo-600/20 hover:text-indigo-300 transition duration-150 font-medium">
+                               class="block text-[10px] truncate px-2 py-1 rounded bg-brand-600/10 border border-brand-500/10 text-brand-400 hover:bg-brand-600/20 hover:text-brand-300 transition duration-150 font-medium">
                                 {{ task.title }}
                             </a>
                         {% endfor %}

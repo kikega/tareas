@@ -6,7 +6,7 @@
                hx-target="#subtask-item-{{ subtask.id }}"
                hx-swap="outerHTML"
                {% if subtask.is_completed %}checked{% endif %}
-               class="h-4.5 w-4.5 rounded border-zinc-800 bg-zinc-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-zinc-950 cursor-pointer">
+               class="h-4.5 w-4.5 rounded border-zinc-800 bg-zinc-900 text-brand-600 focus:ring-brand-500 focus:ring-offset-zinc-950 cursor-pointer">
         
         <span class="text-sm font-semibold truncate {% if subtask.is_completed %}text-zinc-650 line-through{% else %}text-zinc-200{% endif %}">
             {{ subtask.title }}
@@ -29,7 +29,7 @@
                 <button hx-post="{% url 'start_subtask_timer' subtask.id %}"
                         hx-target="#subtask-item-{{ subtask.id }}"
                         hx-swap="outerHTML"
-                        class="text-zinc-500 hover:text-indigo-400 p-1.5 rounded transition"
+                        class="text-zinc-500 hover:text-brand-400 p-1.5 rounded transition"
                         title="Iniciar Temporizador">
                     <i class="fa-solid fa-play text-xs"></i>
                 </button>

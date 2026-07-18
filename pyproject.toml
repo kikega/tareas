@@ -6,8 +6,15 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=6.0.6",
     "django-environ>=0.13.0",
-    "gunicorn>=26.0.0",
-    "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.2",
     "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "psycopg2-binary>=2.9.12",
+]
+prod = [
+    "psycopg>=3.3.4",
+    "gunicorn>=26.0.0",
 ]

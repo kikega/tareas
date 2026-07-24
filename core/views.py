@@ -166,8 +166,14 @@ def project_list_create(request):
             messages.success(request, "Proyecto creado con éxito.")
         return redirect('project_list_create')
         
-    projects = Project.objects.filter(user=request.user).prefetch_related('tasks__time_logs').order_by('-created_at')
-    return render(request, 'projects/project_list.html', {'projects': projects})
+    tab = request.GET.get('tab', 'activos')
+    projects = Project.objects.filter(user=request.user).prefetch_related('tasks__time_logs')
+    if tab == 'historicos':
+        projects = projects.filter(status='COMPLETED')
+    else:
+        projects = projects.filter(status='ACTIVE')
+    projects = projects.order_by('-created_at')
+    return render(request, 'projects/project_list.html', {'projects': projects, 'current_tab': tab})
 
 @login_required
 @require_POST

@@ -73,9 +73,14 @@ class Tag(models.Model):
         return self.name
 
 class Project(models.Model):
+    PROJECT_STATUS_CHOICES = [
+        ('ACTIVE', 'Activo'),
+        ('COMPLETED', 'Completado'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     name = models.CharField(max_length=200, verbose_name="Nombre del Proyecto")
     description = models.TextField(blank=True, verbose_name="Descripción")
+    status = models.CharField(max_length=20, choices=PROJECT_STATUS_CHOICES, default='ACTIVE', verbose_name="Estado")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -88,6 +93,14 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+    def update_status(self):
+        total = self.tasks.count()
+        all_completed = total > 0 and self.tasks.filter(status='COMPLETED').count() == total
+        new_status = 'COMPLETED' if all_completed else 'ACTIVE'
+        if self.status != new_status:
+            self.status = new_status
+            self.save(update_fields=['status'])
 
     @property
     def total_time_seconds(self):
@@ -147,6 +160,17 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.project_id:
+            Project.objects.get(id=self.project_id).update_status()
+
+    def delete(self, *args, **kwargs):
+        project_id = self.project_id
+        super().delete(*args, **kwargs)
+        if project_id:
+            Project.objects.get(id=project_id).update_status()
 
     @property
     def total_time_seconds(self):

@@ -60,12 +60,11 @@
                             title="Editar proyecto">
                         <i class="fa-solid fa-pen text-sm"></i>
                     </button>
-                    <form action="{% url 'project_complete' project.id %}" method="POST" onsubmit="return confirm('¿Finalizar este proyecto? Se moverá al histórico y no aparecerá en proyectos activos.')">
-                        {% csrf_token %}
-                        <button type="submit" class="text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 p-1.5 rounded-lg transition" title="Finalizar proyecto">
-                            <i class="fa-solid fa-flag-checkered text-sm"></i>
-                        </button>
-                    </form>
+                    <button onclick="openFinalizeProjectModal('{{ project.id }}', '{{ project.name|escapejs }}')"
+                            class="text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 p-1.5 rounded-lg transition"
+                            title="Finalizar proyecto">
+                        <i class="fa-solid fa-flag-checkered text-sm"></i>
+                    </button>
                     <form action="{% url 'project_delete' project.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este proyecto y todas sus tareas?')">
                         {% csrf_token %}
                         <button type="submit" class="text-zinc-500 hover:text-rose-450 hover:bg-rose-500/10 p-1.5 rounded-lg transition" title="Eliminar proyecto">
@@ -248,6 +247,36 @@
     </form>
 </dialog>
 
+<!-- Modal: Finalizar Proyecto -->
+<dialog id="finalize-project-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-md w-full focus:outline-none">
+    <div class="flex justify-between items-center mb-5">
+        <h3 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-flag-checkered text-emerald-400 mr-2.5"></i>
+            Finalizar Proyecto
+        </h3>
+        <button onclick="document.getElementById('finalize-project-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+    </div>
+
+    <div class="mb-6">
+        <p class="text-sm text-zinc-300">¿Finalizar <span class="font-semibold text-white" id="finalize-project-name"></span>?</p>
+        <p class="text-xs text-zinc-500 mt-2 leading-relaxed">Se moverá al histórico y no aparecerá en proyectos activos.</p>
+    </div>
+
+    <form id="finalize-project-form" action="" method="POST" class="flex space-x-3">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
+            Finalizar Proyecto
+        </button>
+        <button type="button" onclick="document.getElementById('finalize-project-modal').close()"
+                class="bg-zinc-800 hover:bg-zinc-750 text-zinc-350 font-semibold py-3 px-4 rounded-xl text-sm transition duration-200">
+            Cancelar
+        </button>
+    </form>
+</dialog>
+
 <!-- Modal: Tareas del Proyecto -->
 <dialog id="project-tasks-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-5xl w-full focus:outline-none">
     <div id="project-tasks-modal-content">
@@ -265,6 +294,13 @@
         form.action = `/projects/${id}/edit/`;
         document.getElementById('edit-project-name').value = name;
         document.getElementById('edit-project-description').value = description;
+        modal.showModal();
+    }
+
+    function openFinalizeProjectModal(id, name) {
+        const modal = document.getElementById('finalize-project-modal');
+        document.getElementById('finalize-project-form').action = `/projects/${id}/complete/`;
+        document.getElementById('finalize-project-name').textContent = `"${name}"`;
         modal.showModal();
     }
 

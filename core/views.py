@@ -177,6 +177,16 @@ def project_list_create(request):
 
 @login_required
 @require_POST
+def project_complete(request, pk):
+    project = get_object_or_404(Project, pk=pk, user=request.user)
+    project.status = 'COMPLETED'
+    project.save(update_fields=['status'])
+    TimeLog.objects.filter(user=request.user, task__project=project, end_time__isnull=True).update(end_time=timezone.now())
+    messages.success(request, "Proyecto finalizado y movido al histórico.")
+    return redirect('project_list_create')
+
+@login_required
+@require_POST
 def project_delete(request, pk):
     project = get_object_or_404(Project, pk=pk, user=request.user)
     project.delete()

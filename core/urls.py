@@ -13,6 +13,7 @@ urlpatterns = [
     # Projects CRUD
     path('projects/', views.project_list_create, name='project_list_create'),
     path('projects/<int:pk>/edit/', views.project_edit, name='project_edit'),
+    path('projects/<int:pk>/complete/', views.project_complete, name='project_complete'),
     path('projects/<int:pk>/delete/', views.project_delete, name='project_delete'),
     path('projects/<int:pk>/tasks/', views.project_tasks_modal, name='project_tasks_modal'),
     path('projects/<int:pk>/tasks/add/', views.project_quick_add_task, name='project_quick_add_task'),

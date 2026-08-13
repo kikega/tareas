@@ -127,6 +127,35 @@
         </footer>
     </main>
 
+    <!-- Modal: Confirmar Eliminación -->
+    <dialog id="confirm-delete-modal" class="backdrop:bg-zinc-950/85 backdrop:backdrop-blur-sm bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl text-zinc-100 max-w-md w-full focus:outline-none">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fa-solid fa-triangle-exclamation text-rose-400 mr-2.5"></i>
+                Confirmar Eliminación
+            </h3>
+            <button onclick="document.getElementById('confirm-delete-modal').close()" class="text-zinc-500 hover:text-zinc-200 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <p class="text-sm text-zinc-300" id="confirm-delete-message"></p>
+            <p class="text-xs text-zinc-500 mt-2">Esta acción no se puede deshacer.</p>
+        </div>
+
+        <div class="flex space-x-3">
+            <button type="button" onclick="confirmDeleteAction()"
+                    class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition duration-200 shadow-md">
+                <i class="fa-solid fa-trash-can mr-2"></i>Eliminar
+            </button>
+            <button type="button" onclick="document.getElementById('confirm-delete-modal').close()"
+                    class="bg-zinc-800 hover:bg-zinc-750 text-zinc-350 font-semibold py-3 px-4 rounded-xl text-sm transition duration-200">
+                Cancelar
+            </button>
+        </div>
+    </dialog>
+
     <!-- Configure HTMX request details -->
     <script>
         function getCsrfToken() {
@@ -149,6 +178,30 @@
                 event.detail.headers['X-CSRFToken'] = csrfToken;
             }
         });
+
+        // Reemplaza el confirm() nativo del navegador por el diálogo de la aplicación.
+        let pendingDeleteConfirm = null;
+
+        document.addEventListener('htmx:confirm', function(evt) {
+            // El evento se dispara en todas las peticiones HTMX; solo lo
+            // interceptamos cuando realmente existe hx-confirm.
+            if (!evt.detail.question) {
+                return;
+            }
+            evt.preventDefault();
+            pendingDeleteConfirm = evt.detail;
+            document.getElementById('confirm-delete-message').textContent = evt.detail.question;
+            document.getElementById('confirm-delete-modal').showModal();
+        });
+
+        function confirmDeleteAction() {
+            const modal = document.getElementById('confirm-delete-modal');
+            modal.close();
+            if (pendingDeleteConfirm) {
+                pendingDeleteConfirm.issueRequest(true);
+                pendingDeleteConfirm = null;
+            }
+        }
     </script>
 </body>
 </html>

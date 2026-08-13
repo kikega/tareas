@@ -34,6 +34,32 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- FontAwesome (Icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Barras de desplazamiento con el estilo de la aplicación */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #3f3f46 #18181b;
+        }
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 8px;
+            border: 2px solid #18181b;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+        ::-webkit-scrollbar-corner {
+            background: #18181b;
+        }
+    </style>
     {% block head %}{% endblock %}
 </head>
 <body class="h-full flex flex-col md:flex-row bg-zinc-950 font-sans">

@@ -357,17 +357,44 @@ def task_delete(request, pk):
         return redirect(referer)
     return redirect('task_list_create')
 
+@login_required
+def task_detail(request, pk):
+    task = get_object_or_404(
+        Task.objects.select_related('project', 'category').prefetch_related('tags', 'subtasks__time_logs'),
+        pk=pk,
+        user=request.user,
+    )
+    return render(request, 'tasks/task_detail.html', {'task': task})
+
 # --- SUBTASKS ---
 @login_required
 @require_POST
 def subtask_add(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     title = request.POST.get('title')
+    description = request.POST.get('description', '')
     if title:
-        subtask = Subtask.objects.create(user=request.user, task=task, title=title)
+        subtask = Subtask.objects.create(user=request.user, task=task, title=title, description=description)
         if request.headers.get('HX-Request'):
-            return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask})
+            return render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask, 'show_description': True})
     return redirect('task_edit', pk=task.id)
+
+@login_required
+def subtask_edit(request, pk):
+    subtask = get_object_or_404(Subtask, pk=pk, user=request.user)
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+        if title:
+            subtask.title = title
+            subtask.description = description
+            subtask.save()
+        if request.headers.get('HX-Request'):
+            response = render(request, 'tasks/partials/subtask_item.html', {'subtask': subtask, 'show_description': True})
+            response['HX-Trigger'] = 'time-log-updated'
+            return response
+        return redirect('task_edit', pk=subtask.task.id)
+    return render(request, 'tasks/partials/subtask_edit_modal.html', {'subtask': subtask})
 
 @login_required
 @require_POST

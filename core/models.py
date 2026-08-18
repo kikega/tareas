@@ -221,6 +221,7 @@ class Subtask(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subtasks')
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='subtasks')
     title = models.CharField(max_length=200, verbose_name="Título")
+    description = models.TextField(blank=True, verbose_name="Descripción (Markdown)")
     is_completed = models.BooleanField(default=False, verbose_name="Completada")
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -128,3 +128,56 @@ class ProjectManagementTests(TestCase):
         task_data = next((item for item in data['task_times'] if item['name'] == task.title), None)
         self.assertIsNotNone(task_data)
         self.assertEqual(task_data['value'], 5.0) # 300s = 5m
+
+    def test_subtask_description_field(self):
+        """Verify subtasks can store a markdown description."""
+        task = Task.objects.create(user=self.user, project=self.project, title="Tarea con subtarea")
+        subtask = Subtask.objects.create(
+            user=self.user,
+            task=task,
+            title="Subtarea con notas",
+            description="# Notas\nAlgo de contenido",
+        )
+        self.assertEqual(subtask.description, "# Notas\nAlgo de contenido")
+
+    def test_task_detail_page(self):
+        """Verify the detail page shows the task description and its subtasks with descriptions."""
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea detalle",
+            description="# Descripción\nContenido de la tarea",
+        )
+        Subtask.objects.create(
+            user=self.user,
+            task=task,
+            title="Subtarea 1",
+            description="## Nota de la subtarea",
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(f'/tasks/{task.id}/detail/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("# Descripción", html)  # raw markdown rendered via data-markdown
+        self.assertIn("Contenido de la tarea", html)
+        self.assertIn("Subtarea 1", html)
+        self.assertIn("## Nota de la subtarea", html)
+
+    def test_task_list_hides_description_and_shows_note_icon(self):
+        """Verify the task list does not render the description inline but links to the detail page."""
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea con notas",
+            description="# Notas\nNo debe verse en la lista",
+        )
+        self.client.force_login(self.user)
+        response = self.client.get('/tasks/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        # Description must not be rendered inline in the list
+        self.assertNotIn("No debe verse en la lista", html)
+        self.assertNotIn('data-markdown=', html)
+        # Note icon linking to the detail page must be present
+        self.assertIn(f'/tasks/{task.id}/detail/', html)
+        self.assertIn("fa-note-sticky", html)

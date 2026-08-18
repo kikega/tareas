@@ -1,64 +1,81 @@
-<div id="subtask-item-{{ subtask.id }}" class="flex items-center justify-between p-3.5 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-700 transition duration-150">
-    <div class="flex items-center space-x-3 min-w-0">
-        <!-- Toggle Checkbox -->
-        <input type="checkbox" 
-               hx-post="{% url 'subtask_toggle' subtask.id %}"
-               hx-target="#subtask-item-{{ subtask.id }}"
-               hx-swap="outerHTML"
-               {% if subtask.is_completed %}checked{% endif %}
-               class="h-4.5 w-4.5 rounded border-zinc-800 bg-zinc-900 text-brand-600 focus:ring-brand-500 focus:ring-offset-zinc-950 cursor-pointer">
-        
-        <span class="text-sm font-semibold truncate {% if subtask.is_completed %}text-zinc-650 line-through{% else %}text-zinc-200{% endif %}">
-            {{ subtask.title }}
-        </span>
-    </div>
+<div id="subtask-item-{{ subtask.id }}" class="p-3.5 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-700 transition duration-150">
+    <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center space-x-3 min-w-0">
+            <!-- Toggle Checkbox -->
+            <input type="checkbox" 
+                   hx-post="{% url 'subtask_toggle' subtask.id %}"
+                   hx-target="#subtask-item-{{ subtask.id }}"
+                   hx-swap="outerHTML"
+                   {% if subtask.is_completed %}checked{% endif %}
+                   class="h-4.5 w-4.5 rounded border-zinc-800 bg-zinc-900 text-brand-600 focus:ring-brand-500 focus:ring-offset-zinc-950 cursor-pointer">
+            
+            <span class="text-sm font-semibold truncate {% if subtask.is_completed %}text-zinc-650 line-through{% else %}text-zinc-200{% endif %}">
+                {{ subtask.title }}
+            </span>
+        </div>
 
-    <div class="flex items-center space-x-3 shrink-0">
-        <!-- Time spent -->
-        <span class="font-mono text-[10px] text-zinc-500">
-            {% if subtask.is_running %}
-                <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1 animate-spin"></i>{{ subtask.total_time_seconds }}s</span>
-            {% else %}
-                <span><i class="fa-solid fa-stopwatch mr-1"></i>{{ subtask.total_time_seconds }}s</span>
+        <div class="flex items-center space-x-3 shrink-0">
+            <!-- Time spent -->
+            <span class="font-mono text-[10px] text-zinc-500">
+                {% if subtask.is_running %}
+                    <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1 animate-spin"></i>{{ subtask.total_time_seconds }}s</span>
+                {% else %}
+                    <span><i class="fa-solid fa-stopwatch mr-1"></i>{{ subtask.total_time_seconds }}s</span>
+                {% endif %}
+            </span>
+
+            {% if show_description %}
+            <!-- Edit Subtask -->
+            <button hx-get="{% url 'subtask_edit' subtask.id %}"
+                    hx-target="#subtask-edit-container"
+                    hx-swap="innerHTML"
+                    class="text-zinc-500 hover:text-brand-400 p-1.5 rounded transition"
+                    title="Editar subtarea">
+                <i class="fa-solid fa-pen text-xs"></i>
+            </button>
             {% endif %}
-        </span>
 
-        <!-- Timer operations -->
-        {% if not subtask.is_completed %}
-            {% if not subtask.is_running %}
-                <button hx-post="{% url 'start_subtask_timer' subtask.id %}"
+            <!-- Timer operations -->
+            {% if not subtask.is_completed %}
+                {% if not subtask.is_running %}
+                    <button hx-post="{% url 'start_subtask_timer' subtask.id %}"
+                            hx-target="#subtask-item-{{ subtask.id }}"
+                            hx-swap="outerHTML"
+                            class="text-zinc-500 hover:text-brand-400 p-1.5 rounded transition"
+                            title="Iniciar Temporizador">
+                        <i class="fa-solid fa-play text-xs"></i>
+                    </button>
+                {% else %}
+                    <button hx-post="{% url 'stop_subtask_timer' subtask.id %}"
+                            hx-target="#subtask-item-{{ subtask.id }}"
+                            hx-swap="outerHTML"
+                            class="text-zinc-500 hover:text-rose-400 p-1.5 rounded transition"
+                            title="Pausar Temporizador">
+                        <i class="fa-solid fa-pause text-xs"></i>
+                    </button>
+                {% endif %}
+                <button hx-post="{% url 'finalize_subtask' subtask.id %}"
                         hx-target="#subtask-item-{{ subtask.id }}"
                         hx-swap="outerHTML"
-                        class="text-zinc-500 hover:text-brand-400 p-1.5 rounded transition"
-                        title="Iniciar Temporizador">
-                    <i class="fa-solid fa-play text-xs"></i>
-                </button>
-            {% else %}
-                <button hx-post="{% url 'stop_subtask_timer' subtask.id %}"
-                        hx-target="#subtask-item-{{ subtask.id }}"
-                        hx-swap="outerHTML"
-                        class="text-zinc-500 hover:text-rose-400 p-1.5 rounded transition"
-                        title="Pausar Temporizador">
-                    <i class="fa-solid fa-pause text-xs"></i>
+                        class="text-zinc-500 hover:text-emerald-400 p-1.5 rounded transition"
+                        title="Finalizar Subtarea">
+                    <i class="fa-solid fa-check text-xs"></i>
                 </button>
             {% endif %}
-            <button hx-post="{% url 'finalize_subtask' subtask.id %}"
+
+            <!-- Delete Subtask -->
+            <button hx-post="{% url 'subtask_delete' subtask.id %}"
                     hx-target="#subtask-item-{{ subtask.id }}"
                     hx-swap="outerHTML"
-                    class="text-zinc-500 hover:text-emerald-400 p-1.5 rounded transition"
-                    title="Finalizar Subtarea">
-                <i class="fa-solid fa-check text-xs"></i>
+                    hx-confirm="¿Eliminar esta subtarea?"
+                    class="text-zinc-650 hover:text-rose-400 p-1.5 rounded transition"
+                    title="Eliminar Subtarea">
+                <i class="fa-solid fa-trash-can text-xs"></i>
             </button>
-        {% endif %}
-
-        <!-- Delete Subtask -->
-        <button hx-post="{% url 'subtask_delete' subtask.id %}"
-                hx-target="#subtask-item-{{ subtask.id }}"
-                hx-swap="outerHTML"
-                hx-confirm="¿Eliminar esta subtarea?"
-                class="text-zinc-650 hover:text-rose-400 p-1.5 rounded transition"
-                title="Eliminar Subtarea">
-            <i class="fa-solid fa-trash-can text-xs"></i>
-        </button>
+        </div>
     </div>
+
+    {% if show_description and subtask.description %}
+    <div class="markdown-content text-xs text-zinc-400 max-w-2xl leading-relaxed mt-2.5 pl-8" data-markdown="{{ subtask.description }}"></div>
+    {% endif %}
 </div>

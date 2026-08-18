@@ -3,7 +3,14 @@
     <td class="px-6 py-4">
         <div class="space-y-2">
             <div>
-                <span class="text-sm font-bold text-white block">{{ task.title }}</span>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-bold text-white">{{ task.title }}</span>
+                    {% if task.description %}
+                    <a href="{% url 'task_detail' task.id %}" class="text-brand-400 hover:text-brand-300 transition" title="Ver detalle y notas de la tarea">
+                        <i class="fa-solid fa-note-sticky text-xs"></i>
+                    </a>
+                    {% endif %}
+                </div>
                 <div class="flex items-center space-x-2 mt-1">
                     <span class="text-xs text-zinc-500">{{ task.project.name }}</span>
                     {% if task.category %}
@@ -12,10 +19,6 @@
                     {% endif %}
                 </div>
             </div>
-            {% if task.description %}
-            <div class="markdown-content text-xs text-zinc-400 max-w-2xl leading-relaxed mt-2" data-markdown="{{ task.description }}">
-            </div>
-            {% endif %}
             
             {% if task.subtasks.exists %}
             <div class="mt-3" onclick="event.stopPropagation()">

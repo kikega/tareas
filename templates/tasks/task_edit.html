@@ -144,9 +144,10 @@
             </div>
 
             <!-- List of Subtasks -->
+            <div id="subtask-edit-container"></div>
             <div id="subtasks-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
                 {% for subtask in subtasks %}
-                    {% include 'tasks/partials/subtask_item.html' %}
+                    {% include 'tasks/partials/subtask_item.html' with show_description=True %}
                 {% empty %}
                     <div id="no-subtasks" class="border border-dashed border-zinc-800/80 rounded-xl p-8 text-center bg-zinc-950/20">
                         <span class="text-xs text-zinc-650">No hay subtareas definidas para esta tarea.</span>
@@ -159,20 +160,38 @@
                   hx-target="#subtasks-list"
                   hx-swap="beforeend"
                   hx-on="htmx:afterRequest: this.reset(); document.getElementById('no-subtasks')?.remove()"
-                  class="mt-6 pt-6 border-t border-zinc-850 flex space-x-2">
-                <input type="text" name="title" required 
-                       class="flex-1 px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs transition duration-200" 
-                       placeholder="Añadir subtarea...">
-                <button type="submit" 
-                        class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-2 rounded-xl text-xs transition duration-200">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
+                  class="mt-6 pt-6 border-t border-zinc-850 space-y-2">
+                <div class="flex space-x-2">
+                    <input type="text" name="title" required 
+                           class="flex-1 px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs transition duration-200" 
+                           placeholder="Título de la subtarea...">
+                    <button type="submit" 
+                            class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-2 rounded-xl text-xs transition duration-200">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <textarea name="description" rows="2"
+                          class="w-full px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs transition duration-200 font-mono"
+                          placeholder="Descripción (Markdown, opcional)..."></textarea>
             </form>
         </div>
     </div>
 </div>
 
 <script>
+    function renderMarkdownContent() {
+        document.querySelectorAll('.markdown-content').forEach(el => {
+            const rawMarkdown = el.getAttribute('data-markdown');
+            if (rawMarkdown) {
+                el.innerHTML = marked.parse(rawMarkdown);
+            }
+        });
+    }
+
+    // Run on initial load and after HTMX swaps (subtask toggles, edits, etc.)
+    window.addEventListener('load', renderMarkdownContent);
+    document.body.addEventListener('htmx:afterSwap', renderMarkdownContent);
+
     function switchTab(tab) {
         const editorContainer = document.getElementById('editor-container');
         const previewContainer = document.getElementById('preview-container');

@@ -46,6 +46,8 @@
                 <span class="shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-zinc-850 text-zinc-400 border border-zinc-800">Pendiente</span>
             {% elif task.status == 'IN_PROGRESS' %}
                 <span class="shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse">En Progreso</span>
+            {% elif task.status == 'TESTING' %}
+                <span class="shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20">En pruebas</span>
             {% else %}
                 <span class="shrink-0 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completada</span>
             {% endif %}

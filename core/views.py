@@ -622,7 +622,7 @@ def task_update_status_api(request, task_id):
         try:
             data = json.loads(request.body)
             new_status = data.get('status')
-            if new_status in ['PENDING', 'IN_PROGRESS', 'COMPLETED']:
+            if new_status in ['PENDING', 'IN_PROGRESS', 'TESTING', 'COMPLETED']:
                 task = get_object_or_404(Task, id=task_id, user=request.user)
                 
                 # If finalizing, stop timer
@@ -631,7 +631,7 @@ def task_update_status_api(request, task_id):
                 else:
                     task.status = new_status
                     # If moving away from progress, stop timer but don't mark completed
-                    if new_status == 'PENDING' and task.is_running:
+                    if new_status in ['PENDING', 'TESTING'] and task.is_running:
                         task.stop_timer()
                     task.save()
                     

@@ -46,6 +46,8 @@
             <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-zinc-850 text-zinc-400 border border-zinc-800">Pendiente</span>
         {% elif task.status == 'IN_PROGRESS' %}
             <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse">En Progreso</span>
+        {% elif task.status == 'TESTING' %}
+            <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20">En pruebas</span>
         {% else %}
             <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completada</span>
         {% endif %}
@@ -87,20 +89,22 @@
     <!-- Action Buttons -->
     <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
         {% if task.status != 'COMPLETED' %}
-            {% if not task.is_running %}
-                <button hx-post="{% url 'start_task_timer' task.id %}"
-                        hx-target="#task-row-{{ task.id }}"
-                        hx-swap="outerHTML"
-                        class="bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
-                    <i class="fa-solid fa-play"></i>
-                </button>
-            {% else %}
-                <button hx-post="{% url 'stop_task_timer' task.id %}"
-                        hx-target="#task-row-{{ task.id }}"
-                        hx-swap="outerHTML"
-                        class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
-                    <i class="fa-solid fa-pause"></i>
-                </button>
+            {% if task.status != 'TESTING' %}
+                {% if not task.is_running %}
+                    <button hx-post="{% url 'start_task_timer' task.id %}"
+                            hx-target="#task-row-{{ task.id }}"
+                            hx-swap="outerHTML"
+                            class="bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                {% else %}
+                    <button hx-post="{% url 'stop_task_timer' task.id %}"
+                            hx-target="#task-row-{{ task.id }}"
+                            hx-swap="outerHTML"
+                            class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-200">
+                        <i class="fa-solid fa-pause"></i>
+                    </button>
+                {% endif %}
             {% endif %}
             <button hx-post="{% url 'finalize_task' task.id %}"
                     hx-target="#task-row-{{ task.id }}"

@@ -34,8 +34,15 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold tracking-tight text-white">Tareas</h1>
-            <p class="text-zinc-400 text-sm mt-1">Administra y controla el tiempo de tus tareas activas.</p>
+            <p class="text-zinc-400 text-sm mt-1">
+                {% if current_tab == 'historicos' %}
+                    Tareas que han sido completadas.
+                {% else %}
+                    Administra y controla el tiempo de tus tareas activas.
+                {% endif %}
+            </p>
         </div>
+        {% if current_tab != 'historicos' %}
         <div>
             <button onclick="document.getElementById('new-task-modal').showModal()" 
                     class="bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition duration-200 shadow-md flex items-center space-x-2">
@@ -43,11 +50,25 @@
                 <span>Nueva Tarea</span>
             </button>
         </div>
+        {% endif %}
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-1 border-b border-zinc-800">
+        <a href="{% url 'task_list_create' %}?tab=activos" 
+           class="px-4 py-2.5 text-sm font-semibold rounded-t-lg transition {% if current_tab != 'historicos' %}bg-zinc-900 text-white border-b-2 border-brand-500{% else %}text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50{% endif %}">
+            <i class="fa-solid fa-play mr-1.5"></i>Activas
+        </a>
+        <a href="{% url 'task_list_create' %}?tab=historicos" 
+           class="px-4 py-2.5 text-sm font-semibold rounded-t-lg transition {% if current_tab == 'historicos' %}bg-zinc-900 text-white border-b-2 border-brand-500{% else %}text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50{% endif %}">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Histórico
+        </a>
     </div>
 
     <!-- Filters Form (HTMX) -->
     <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
         <form id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" name="tab" value="{{ current_tab }}">
             <div>
                 <label for="filter-project" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Filtrar por Proyecto</label>
                 <select name="project" id="filter-project" 
@@ -70,10 +91,14 @@
                         hx-trigger="change"
                         hx-include="#filter-form"
                         class="w-full px-3 py-2 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-1 focus:ring-brand-500 text-sm">
+                    {% if current_tab == 'historicos' %}
+                    <option value="">Todos los Estados</option>
+                    <option value="COMPLETED">Completada</option>
+                    {% else %}
                     <option value="">Todos los Estados</option>
                     <option value="PENDING">Pendiente</option>
                     <option value="IN_PROGRESS">En Progreso</option>
-                    <option value="COMPLETED">Completada</option>
+                    {% endif %}
                 </select>
             </div>
         </form>

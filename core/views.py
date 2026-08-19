@@ -278,8 +278,13 @@ def task_list_create(request):
         messages.success(request, "Tarea creada con éxito.")
         return redirect('task_list_create')
         
+    tab = request.GET.get('tab', 'activos')
     tasks = Task.objects.filter(user=request.user).select_related('project', 'category').prefetch_related('tags', 'time_logs').order_by('-created_at')
-    projects = Project.objects.filter(user=request.user)
+    if tab == 'historicos':
+        tasks = tasks.filter(status='COMPLETED')
+    else:
+        tasks = tasks.exclude(status='COMPLETED')
+    projects = Project.objects.filter(user=request.user, status='ACTIVE')
     categories = Category.objects.filter(user=request.user)
     tags = Tag.objects.filter(user=request.user)
     
@@ -293,13 +298,14 @@ def task_list_create(request):
         tasks = tasks.filter(status=status_filter)
         
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/task_table.html', {'tasks': tasks})
+        return render(request, 'tasks/partials/task_table.html', {'tasks': tasks, 'current_tab': tab})
         
     context = {
         'tasks': tasks,
         'projects': projects,
         'categories': categories,
         'tags': tags,
+        'current_tab': tab,
     }
     return render(request, 'tasks/task_list.html', context)
 
@@ -502,7 +508,7 @@ def finalize_task(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     task.finalize_timer()
     if request.headers.get('HX-Request'):
-        response = render(request, 'tasks/partials/task_row.html', {'task': task})
+        response = HttpResponse("")
         response['HX-Trigger'] = 'time-log-updated'
         return response
     return redirect('task_list_create')

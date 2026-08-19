@@ -4,9 +4,9 @@
         <div class="space-y-2">
             <div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-sm font-bold text-white">{{ task.title }}</span>
+                    <a href="{% url 'task_detail' task.id %}" class="text-sm font-bold text-white hover:text-brand-400 hover:underline transition truncate" title="Ver detalle y notas de la tarea">{{ task.title }}</a>
                     {% if task.description %}
-                    <a href="{% url 'task_detail' task.id %}" class="text-brand-400 hover:text-brand-300 transition" title="Ver detalle y notas de la tarea">
+                    <a href="{% url 'task_detail' task.id %}" class="text-brand-400 hover:text-brand-300 transition shrink-0" title="Ver detalle y notas de la tarea">
                         <i class="fa-solid fa-note-sticky text-xs"></i>
                     </a>
                     {% endif %}

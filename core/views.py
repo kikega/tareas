@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -428,6 +429,18 @@ def subtask_delete(request, pk):
 
 # --- CATEGORIES & TAGS ---
 @login_required
+def settings_view(request):
+    tab = request.GET.get('tab', 'categorias')
+    categories = Category.objects.filter(user=request.user)
+    tags = Tag.objects.filter(user=request.user)
+    context = {
+        'categories': categories,
+        'tags': tags,
+        'current_tab': tab,
+    }
+    return render(request, 'settings/settings.html', context)
+
+@login_required
 def category_list_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -437,10 +450,7 @@ def category_list_create(request):
         if name:
             Category.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
             messages.success(request, "Categoría creada con éxito.")
-        return redirect('category_list_create')
-        
-    categories = Category.objects.filter(user=request.user)
-    return render(request, 'categories/category_list.html', {'categories': categories})
+    return redirect('settings')
 
 @login_required
 @require_POST
@@ -448,7 +458,7 @@ def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     category.delete()
     messages.success(request, "Categoría eliminada.")
-    return redirect('category_list_create')
+    return redirect('settings')
 
 @login_required
 def tag_list_create(request):
@@ -460,10 +470,7 @@ def tag_list_create(request):
         if name:
             Tag.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
             messages.success(request, "Etiqueta creada con éxito.")
-        return redirect('tag_list_create')
-        
-    tags = Tag.objects.filter(user=request.user)
-    return render(request, 'tags/tag_list.html', {'tags': tags})
+    return redirect(reverse('settings') + '?tab=etiquetas')
 
 @login_required
 @require_POST
@@ -471,7 +478,7 @@ def tag_delete(request, pk):
     tag = get_object_or_404(Tag, pk=pk, user=request.user)
     tag.delete()
     messages.success(request, "Etiqueta eliminada.")
-    return redirect('tag_list_create')
+    return redirect('settings')
 
 # --- HTMX TIMER VIEWS ---
 @login_required

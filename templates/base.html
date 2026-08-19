@@ -96,13 +96,9 @@
                     <i class="fa-solid fa-calendar-days w-5"></i>
                     <span>Calendario</span>
                 </a>
-                <a href="{% url 'category_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'category' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
-                    <i class="fa-solid fa-tags w-5"></i>
-                    <span>Categorías</span>
-                </a>
-                <a href="{% url 'tag_list_create' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'tag' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
-                    <i class="fa-solid fa-hashtag w-5"></i>
-                    <span>Etiquetas</span>
+                <a href="{% url 'settings' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-200 {% if 'setting' in request.resolver_match.url_name or 'category' in request.resolver_match.url_name or 'tag' in request.resolver_match.url_name %}bg-brand-600/10 text-brand-400{% else %}text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200{% endif %}">
+                    <i class="fa-solid fa-gear w-5"></i>
+                    <span>Configuración</span>
                 </a>
             </nav>
         </div>

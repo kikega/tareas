@@ -31,6 +31,7 @@ urlpatterns = [
     path('subtasks/<int:pk>/delete/', views.subtask_delete, name='subtask_delete'),
     
     # Categories & Tags CRUD
+    path('settings/', views.settings_view, name='settings'),
     path('categories/', views.category_list_create, name='category_list_create'),
     path('categories/<int:pk>/delete/', views.category_delete, name='category_delete'),
     path('tags/', views.tag_list_create, name='tag_list_create'),

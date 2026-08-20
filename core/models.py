@@ -207,6 +207,14 @@ class Task(models.Model):
         self.save()
 
     @property
+    def total_time_formatted(self):
+        secs = self.total_time_seconds
+        h = secs // 3600
+        m = (secs % 3600) // 60
+        s = secs % 60
+        return f"{h:02d}:{m:02d}:{s:02d}"
+
+    @property
     def completed_subtasks_count(self):
         if 'subtasks' in getattr(self, '_prefetched_objects_cache', {}):
             return sum(1 for s in self.subtasks.all() if s.is_completed)

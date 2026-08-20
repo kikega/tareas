@@ -69,9 +69,9 @@
     <!-- Cumulative Time Spent -->
     <td class="px-6 py-4 font-mono text-xs text-zinc-400" id="timer-display-{{ task.id }}">
         {% if task.is_running %}
-        <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1.5 animate-spin" style="animation-duration: 2s;"></i>{{ task.total_time_seconds }}s</span>
+        <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1.5 animate-spin" style="animation-duration: 2s;"></i>{{ task.total_time_formatted }}</span>
         {% else %}
-        <span><i class="fa-solid fa-stopwatch mr-1.5 text-zinc-700"></i>{{ task.total_time_seconds }}s</span>
+        <span><i class="fa-solid fa-stopwatch mr-1.5 text-zinc-700"></i>{{ task.total_time_formatted }}</span>
         {% endif %}
     </td>
 

@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 import time
 import datetime
 
-from .models import User, Project, Task, Subtask, TimeLog, validate_markdown
+from .models import User, Project, Task, Subtask, Category, Tag, TimeLog, validate_markdown
 
 class ProjectManagementTests(TestCase):
     def setUp(self):
@@ -237,4 +237,43 @@ class ProjectManagementTests(TestCase):
         self.assertEqual(res.json().get('task_status'), 'IN_PROGRESS')
         task.refresh_from_db()
         self.assertEqual(task.status, 'IN_PROGRESS')
+
+    def test_project_with_category_create_edit_and_filter(self):
+        """Verify that projects can be created with categories, edited, and filtered."""
+        cat_dev = Category.objects.create(user=self.user, name="Desarrollo", color="#10b981")
+        cat_ops = Category.objects.create(user=self.user, name="DevOps", color="#f59e0b")
+        
+        self.client.force_login(self.user)
+        
+        # 1. Create project with category
+        res = self.client.post('/projects/', {
+            'name': 'Proyecto Web',
+            'description': 'App Django',
+            'category': cat_dev.id
+        })
+        self.assertEqual(res.status_code, 302)
+        proj = Project.objects.filter(name='Proyecto Web').first()
+        self.assertIsNotNone(proj)
+        self.assertEqual(proj.category, cat_dev)
+        
+        # 2. Edit project category
+        res_edit = self.client.post(f'/projects/{proj.id}/edit/', {
+            'name': 'Proyecto Web Actualizado',
+            'description': 'Infraestructura',
+            'category': cat_ops.id
+        })
+        self.assertEqual(res_edit.status_code, 302)
+        proj.refresh_from_db()
+        self.assertEqual(proj.category, cat_ops)
+        self.assertEqual(proj.name, 'Proyecto Web Actualizado')
+        
+        # 3. Filter projects by category
+        res_filter = self.client.get(f'/projects/?category={cat_ops.id}')
+        self.assertEqual(res_filter.status_code, 200)
+        self.assertIn("Proyecto Web Actualizado", res_filter.content.decode())
+        
+        res_filter_empty = self.client.get(f'/projects/?category={cat_dev.id}')
+        self.assertEqual(res_filter_empty.status_code, 200)
+        self.assertNotIn("Proyecto Web Actualizado", res_filter_empty.content.decode())
+
 

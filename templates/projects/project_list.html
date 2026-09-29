@@ -33,15 +33,34 @@
 
     <!-- Tabs -->
     <div class="flex space-x-1 border-b border-zinc-800">
-        <a href="{% url 'project_list_create' %}?tab=activos" 
+        <a href="{% url 'project_list_create' %}?tab=activos{% if selected_category %}&category={{ selected_category }}{% endif %}" 
            class="px-4 py-2.5 text-sm font-semibold rounded-t-lg transition {% if current_tab == 'activos' %}bg-zinc-900 text-white border-b-2 border-brand-500{% else %}text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50{% endif %}">
             <i class="fa-solid fa-play mr-1.5"></i>Activos
         </a>
-        <a href="{% url 'project_list_create' %}?tab=historicos" 
+        <a href="{% url 'project_list_create' %}?tab=historicos{% if selected_category %}&category={{ selected_category }}{% endif %}" 
            class="px-4 py-2.5 text-sm font-semibold rounded-t-lg transition {% if current_tab == 'historicos' %}bg-zinc-900 text-white border-b-2 border-brand-500{% else %}text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50{% endif %}">
             <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Histórico
         </a>
     </div>
+
+    <!-- Category Filter Pills -->
+    {% if categories %}
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-zinc-500 font-bold uppercase tracking-wider text-[10px] mr-1">Categoría:</span>
+        <a href="{% url 'project_list_create' %}?tab={{ current_tab }}" 
+           class="px-3 py-1.5 rounded-xl font-medium transition {% if not selected_category %}bg-brand-600 text-white shadow-sm{% else %}bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800{% endif %}">
+            Todas
+        </a>
+        {% for cat in categories %}
+        <a href="{% url 'project_list_create' %}?tab={{ current_tab }}&category={{ cat.id }}" 
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium transition {% if selected_category == cat.id|stringformat:'s' %}border text-white shadow-sm{% else %}bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800{% endif %}"
+           {% if selected_category == cat.id|stringformat:'s' %}style="background-color: {{ cat.color }}25; border-color: {{ cat.color }}; color: {{ cat.color }};"{% endif %}>
+            <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ cat.color }};"></span>
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <!-- Projects List -->
     <div class="space-y-4">
@@ -50,12 +69,21 @@
             <!-- Top row: name + actions -->
             <div class="flex items-start justify-between px-6 pt-5 pb-2 gap-4">
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-lg font-bold text-white group-hover:text-brand-400 transition truncate">{{ project.name }}</h3>
+                    <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
+                        <h3 class="text-lg font-bold text-white group-hover:text-brand-400 transition truncate">{{ project.name }}</h3>
+                        {% if project.category %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0" 
+                              style="background-color: {{ project.category.color }}18; color: {{ project.category.color }}; border: 1px solid {{ project.category.color }}35;">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ project.category.color }};"></span>
+                            {{ project.category.name }}
+                        </span>
+                        {% endif %}
+                    </div>
                     <p class="text-sm text-zinc-400 leading-relaxed mt-1 line-clamp-2">{{ project.description|default:"Sin descripción." }}</p>
                 </div>
                 {% if current_tab != 'historicos' %}
                 <div class="flex items-center space-x-1 shrink-0">
-                    <button onclick="openEditProjectModal('{{ project.id }}', '{{ project.name|escapejs }}', '{{ project.description|escapejs }}')" 
+                    <button onclick="openEditProjectModal('{{ project.id }}', '{{ project.name|escapejs }}', '{{ project.description|escapejs }}', '{{ project.category.id|default:'' }}')" 
                             class="text-zinc-500 hover:text-brand-400 hover:bg-brand-500/10 p-1.5 rounded-lg transition" 
                             title="Editar proyecto">
                         <i class="fa-solid fa-pen text-sm"></i>
@@ -187,6 +215,17 @@
         </div>
         
         <div>
+            <label for="project-category" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Categoría</label>
+            <select name="category" id="project-category"
+                    class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200">
+                <option value="">Sin categoría</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
             <label for="description" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Descripción</label>
             <textarea name="description" id="description" rows="4" 
                       class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200" 
@@ -225,6 +264,17 @@
             <input type="text" name="name" id="edit-project-name" required 
                    class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200" 
                    placeholder="Ej. Rediseño Web">
+        </div>
+
+        <div>
+            <label for="edit-project-category" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Categoría</label>
+            <select name="category" id="edit-project-category"
+                    class="w-full px-4 py-3 border border-zinc-850 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition duration-200">
+                <option value="">Sin categoría</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
         </div>
         
         <div>
@@ -288,12 +338,13 @@
 </dialog>
 
 <script>
-    function openEditProjectModal(id, name, description) {
+    function openEditProjectModal(id, name, description, categoryId) {
         const modal = document.getElementById('edit-project-modal');
         const form = document.getElementById('edit-project-form');
         form.action = `/projects/${id}/edit/`;
         document.getElementById('edit-project-name').value = name;
         document.getElementById('edit-project-description').value = description;
+        document.getElementById('edit-project-category').value = categoryId || '';
         modal.showModal();
     }
 

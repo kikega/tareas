@@ -27,9 +27,9 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'created_at')
+    list_display = ('name', 'user', 'category', 'status', 'created_at')
     search_fields = ('name', 'user__email')
-    list_filter = ('user',)
+    list_filter = ('user', 'category', 'status')
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):

@@ -175,19 +175,36 @@ def project_list_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
+        category_id = request.POST.get('category')
+        category = None
+        if category_id:
+            category = get_object_or_404(Category, id=category_id, user=request.user)
         if name:
-            Project.objects.create(user=request.user, name=name, description=description)
+            Project.objects.create(user=request.user, name=name, description=description, category=category)
             messages.success(request, "Proyecto creado con éxito.")
+        else:
+            messages.error(request, "El nombre del proyecto es obligatorio.")
         return redirect('project_list_create')
         
     tab = request.GET.get('tab', 'activos')
-    projects = Project.objects.filter(user=request.user).prefetch_related('tasks__time_logs')
+    category_filter = request.GET.get('category')
+    projects = Project.objects.filter(user=request.user).select_related('category').prefetch_related('tasks__time_logs')
     if tab == 'historicos':
         projects = projects.filter(status='COMPLETED')
     else:
         projects = projects.filter(status='ACTIVE')
+        
+    if category_filter:
+        projects = projects.filter(category_id=category_filter)
+        
     projects = projects.order_by('-created_at')
-    return render(request, 'projects/project_list.html', {'projects': projects, 'current_tab': tab})
+    categories = Category.objects.filter(user=request.user)
+    return render(request, 'projects/project_list.html', {
+        'projects': projects,
+        'categories': categories,
+        'current_tab': tab,
+        'selected_category': category_filter,
+    })
 
 @login_required
 @require_POST
@@ -213,9 +230,14 @@ def project_edit(request, pk):
     project = get_object_or_404(Project, pk=pk, user=request.user)
     name = request.POST.get('name')
     description = request.POST.get('description', '')
+    category_id = request.POST.get('category')
     if name:
         project.name = name
         project.description = description
+        if category_id:
+            project.category = get_object_or_404(Category, id=category_id, user=request.user)
+        else:
+            project.category = None
         project.save()
         messages.success(request, "Proyecto actualizado con éxito.")
     else:

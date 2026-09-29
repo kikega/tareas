@@ -80,6 +80,7 @@ class Project(models.Model):
         ('COMPLETED', 'Completado'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects', verbose_name="Categoría")
     name = models.CharField(max_length=200, verbose_name="Nombre del Proyecto")
     description = models.TextField(blank=True, verbose_name="Descripción")
     status = models.CharField(max_length=20, choices=PROJECT_STATUS_CHOICES, default='ACTIVE', verbose_name="Estado")

@@ -5,8 +5,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 def validate_markdown(value):
-    ext = os.path.splitext(value.name)[1]
-    if ext.lower() != '.md':
+    if hasattr(value, 'size') and value.size > 5 * 1024 * 1024:
+        raise ValidationError("El archivo no debe exceder 5 MB.")
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext != '.md':
         raise ValidationError("Únicamente se permiten archivos en formato Markdown (.md).")
 
 class UserManager(BaseUserManager):
@@ -165,13 +167,17 @@ class Task(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.project_id:
-            Project.objects.get(id=self.project_id).update_status()
+            project = Project.objects.filter(id=self.project_id).first()
+            if project:
+                project.update_status()
 
     def delete(self, *args, **kwargs):
         project_id = self.project_id
         super().delete(*args, **kwargs)
         if project_id:
-            Project.objects.get(id=project_id).update_status()
+            project = Project.objects.filter(id=project_id).first()
+            if project:
+                project.update_status()
 
     @property
     def total_time_seconds(self):
@@ -250,6 +256,14 @@ class Subtask(models.Model):
             else:
                 total_secs += int((timezone.now() - log.start_time).total_seconds())
         return total_secs
+
+    @property
+    def total_time_formatted(self):
+        secs = self.total_time_seconds
+        h = secs // 3600
+        m = (secs % 3600) // 60
+        s = secs % 60
+        return f"{h:02d}:{m:02d}:{s:02d}"
 
     @property
     def is_running(self):

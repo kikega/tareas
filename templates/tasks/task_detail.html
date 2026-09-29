@@ -72,7 +72,7 @@
             </span>
             {% endif %}
             <span class="font-mono text-zinc-500">
-                <i class="fa-regular fa-clock mr-1"></i>{{ task.total_time_seconds }}s
+                <i class="fa-regular fa-clock mr-1"></i>{{ task.total_time_formatted }}
             </span>
         </div>
 
@@ -147,7 +147,7 @@
         document.querySelectorAll('.markdown-content').forEach(el => {
             const rawMarkdown = el.getAttribute('data-markdown');
             if (rawMarkdown) {
-                el.innerHTML = marked.parse(rawMarkdown);
+                el.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(rawMarkdown)) : marked.parse(rawMarkdown);
             }
         });
     }

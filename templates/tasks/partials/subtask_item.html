@@ -18,9 +18,9 @@
             <!-- Time spent -->
             <span class="font-mono text-[10px] text-zinc-500">
                 {% if subtask.is_running %}
-                    <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1 animate-spin"></i>{{ subtask.total_time_seconds }}s</span>
+                    <span class="text-amber-500 font-bold"><i class="fa-solid fa-stopwatch mr-1 animate-spin"></i>{{ subtask.total_time_formatted }}</span>
                 {% else %}
-                    <span><i class="fa-solid fa-stopwatch mr-1"></i>{{ subtask.total_time_seconds }}s</span>
+                    <span><i class="fa-solid fa-stopwatch mr-1"></i>{{ subtask.total_time_formatted }}</span>
                 {% endif %}
             </span>
 

@@ -308,7 +308,7 @@
         document.querySelectorAll('.markdown-content').forEach(el => {
             const rawMarkdown = el.getAttribute('data-markdown');
             if (rawMarkdown) {
-                el.innerHTML = marked.parse(rawMarkdown);
+                el.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(rawMarkdown)) : marked.parse(rawMarkdown);
             }
         });
     }

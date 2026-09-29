@@ -3,11 +3,6 @@
 {% block title %}Dashboard | GestorPro{% endblock %}
 
 {% block head %}
-<!-- React & ReactDOM -->
-<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-<!-- Babel Standalone for JSX compilation -->
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.3/babel.min.js"></script>
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
@@ -207,7 +202,7 @@
                                 {% endif %}
                             </td>
                             <td class="py-3.5 text-right font-mono text-xs text-zinc-400">
-                                {{ task.total_time_seconds }}s
+                                {{ task.total_time_formatted }}
                             </td>
                         </tr>
                         {% empty %}
@@ -257,258 +252,202 @@
     </div> </div>
 </div>
 
-<!-- React & Chart JS script island -->
-<script id="kanban-jsx" type="text/plain">
-    const { useState, useEffect } = React;
+<!-- Native Vanilla JS Kanban Island -->
+<script>
+(function() {
+    const container = document.getElementById('kanban-root');
+    if (!container) return;
 
-    // --- KANBAN BOARD COMPONENT ---
-    function KanbanBoard() {
-        const [tasks, setTasks] = useState([]);
-        const [loading, setLoading] = useState(true);
+    let tasks = [];
+    let loading = true;
 
-        const fetchTasks = () => {
-            fetch('/api/tasks/')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+    const columns = [
+        { id: 'PENDING', title: 'Pendientes', colorClass: 'border-zinc-800 bg-zinc-950/40 text-zinc-400' },
+        { id: 'IN_PROGRESS', title: 'En Progreso', colorClass: 'border-amber-500/20 bg-amber-500/5 text-amber-500' },
+        { id: 'TESTING', title: 'En pruebas', colorClass: 'border-violet-500/20 bg-violet-500/5 text-violet-500' }
+    ];
+
+    function formatTime(secs) {
+        if (!secs || secs === 0) return '0s';
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = secs % 60;
+        if (h > 0) return `${h}h ${m}m`;
+        if (m > 0) return `${m}m ${s}s`;
+        return `${s}s`;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderBoard() {
+        if (loading) {
+            container.innerHTML = `
+                <div class="flex justify-center items-center h-[300px]">
+                    <div class="text-zinc-500 text-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-spinner animate-spin"></i>
+                        <span>Cargando tablero...</span>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">';
+
+        columns.forEach(col => {
+            const colTasks = tasks.filter(t => t.status === col.id);
+            html += `
+                <div class="border rounded-2xl p-4 flex flex-col h-[520px] ${col.colorClass}"
+                     ondragover="kanbanDragOver(event)"
+                     ondrop="kanbanDrop(event, '${col.id}')">
+                    <div class="flex items-center justify-between mb-4 border-b border-zinc-800 pb-2 shrink-0">
+                        <span class="text-sm font-bold text-zinc-250">${col.title}</span>
+                        <span class="text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full font-medium">${colTasks.length}</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-1">`;
+
+            if (colTasks.length === 0) {
+                html += `
+                    <div class="flex-1 border border-dashed border-zinc-800/80 rounded-xl flex items-center justify-center p-8 text-center min-h-[120px]">
+                        <span class="text-xs text-zinc-650">Suelta tareas aquí</span>
+                    </div>`;
+            } else {
+                colTasks.forEach(task => {
+                    const runningIndicator = task.is_running ? `
+                        <div class="absolute top-2 right-2 flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </div>` : '';
+
+                    let categoryBadge = '';
+                    if (task.category) {
+                        const color = task.category_color || '#3b82f6';
+                        categoryBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
+                                              style="background-color: ${color}15; color: ${color}; border: 1px solid ${color}30;">
+                                            ${escapeHtml(task.category)}
+                                         </span>`;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    setTasks(data.tasks || []);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.error("Error fetching tasks:", error);
-                    setLoading(false);
+
+                    let tagsBadges = '';
+                    if (task.tags && task.tags.length > 0) {
+                        tagsBadges = task.tags.map(t => {
+                            const c = t.color || '#ef4444';
+                            return `<span class="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
+                                          style="background-color: ${c}15; color: ${c}; border: 1px solid ${c}30;">
+                                        ${escapeHtml(t.name)}
+                                    </span>`;
+                        }).join(' ');
+                    }
+
+                    html += `
+                        <div draggable="true"
+                             ondragstart="kanbanDragStart(event, ${task.id})"
+                             class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-4 rounded-xl cursor-grab active:cursor-grabbing transition duration-200 shadow-md flex flex-col gap-2 relative group">
+                            ${runningIndicator}
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider truncate max-w-[100px]">${escapeHtml(task.project)}</span>
+                                <div class="flex flex-wrap items-center gap-1 justify-end min-w-0">
+                                    ${categoryBadge}
+                                    ${tagsBadges}
+                                </div>
+                            </div>
+                            <div class="text-sm font-bold text-zinc-100 group-hover:text-brand-400 transition-colors duration-200 line-clamp-2">${escapeHtml(task.title)}</div>
+                            <div class="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-500">
+                                <span class="font-mono flex items-center text-zinc-400">
+                                    <i class="fa-solid fa-stopwatch mr-1.5 text-zinc-650"></i>
+                                    ${formatTime(task.time_spent_secs)}
+                                </span>
+                                <a href="/tasks/${task.id}/edit/" class="text-brand-400 hover:underline flex items-center">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Editar
+                                </a>
+                            </div>
+                        </div>`;
                 });
-        };
+            }
 
-        useEffect(() => {
+            html += `
+                    </div>
+                </div>`;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.kanbanDragStart = function(e, taskId) {
+        e.dataTransfer.setData("text/plain", String(taskId));
+    };
+
+    window.kanbanDragOver = function(e) {
+        e.preventDefault();
+    };
+
+    window.kanbanDrop = function(e, targetStatus) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData("text/plain");
+        if (!taskId) return;
+
+        // Optimistic UI update
+        tasks = tasks.map(t => {
+            if (String(t.id) === String(taskId)) {
+                return { ...t, status: targetStatus };
+            }
+            return t;
+        });
+        renderBoard();
+
+        fetch(`/api/tasks/${taskId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ status: targetStatus })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al actualizar');
+            return response.json();
+        })
+        .then(result => {
             fetchTasks();
-            // Poll for timer/status changes periodically
-            const interval = setInterval(fetchTasks, 10000);
-            return () => clearInterval(interval);
-        }, []);
+            window.dispatchEvent(new CustomEvent('time-log-updated'));
+        })
+        .catch(err => {
+            console.error("Error moviendo tarea:", err);
+            fetchTasks();
+        });
+    };
 
-        const onDragStart = (e, task) => {
-            e.dataTransfer.setData("text/plain", task.id);
-        };
-
-        const onDragOver = (e) => {
-            e.preventDefault();
-        };
-
-        const onDrop = (e, targetStatus) => {
-            e.preventDefault();
-            const taskId = e.dataTransfer.getData("text/plain");
-            
-            // Optimistic UI update
-            const updatedTasks = tasks.map(t => {
-                if (t.id.toString() === taskId) {
-                    return { ...t, status: targetStatus };
-                }
-                return t;
-            });
-            setTasks(updatedTasks);
-
-            fetch(`/api/tasks/${taskId}/update-status/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify({ status: targetStatus })
+    function fetchTasks() {
+        if (document.hidden) return;
+        fetch('/api/tasks/')
+            .then(res => {
+                if (!res.ok) throw new Error('Network error');
+                return res.json();
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(result => {
-                if (result.status !== 'success') {
-                    fetchTasks();
-                } else {
-                    fetchTasks();
-                    window.dispatchEvent(new CustomEvent('time-log-updated'));
-                }
+            .then(data => {
+                tasks = data.tasks || [];
+                loading = false;
+                renderBoard();
             })
             .catch(err => {
-                console.error("Error dropping task:", err);
-                fetchTasks();
+                console.error("Error fetching tasks:", err);
+                loading = false;
+                renderBoard();
             });
-        };
-
-        const formatTime = (secs) => {
-            if (secs === 0) return '0s';
-            const h = Math.floor(secs / 3600);
-            const m = Math.floor((secs % 3600) / 60);
-            const s = secs % 60;
-            if (h > 0) return `${h}h ${m}m`;
-            if (m > 0) return `${m}m ${s}s`;
-            return `${s}s`;
-        };
-
-        if (loading) {
-            return (
-                <div className="flex justify-center items-center h-[300px]">
-                    <div className="text-zinc-500 text-sm flex items-center space-x-2">
-                        <i className="fa-solid fa-spinner animate-spin"></i>
-                        <span>Cargando tareas...</span>
-                    </div>
-                </div>
-            );
-        }
-
-        const columns = [
-            { id: 'PENDING', title: 'Pendientes', colorClass: 'border-zinc-800 bg-zinc-950/40 text-zinc-400' },
-            { id: 'IN_PROGRESS', title: 'En Progreso', colorClass: 'border-amber-500/20 bg-amber-500/5 text-amber-500' },
-            { id: 'TESTING', title: 'En pruebas', colorClass: 'border-violet-500/20 bg-violet-500/5 text-violet-500' }
-        ];
-
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                {columns.map(col => {
-                    const colTasks = tasks.filter(t => t.status === col.id);
-                    return (
-                        <div 
-                            key={col.id} 
-                            onDragOver={onDragOver}
-                            onDrop={(e) => onDrop(e, col.id)}
-                            className={`border rounded-2xl p-4 flex flex-col h-[520px] ${col.colorClass}`}
-                        >
-                            {/* Header Column */}
-                            <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-2 shrink-0">
-                                <span className="text-sm font-bold text-zinc-250">{col.title}</span>
-                                <span className="text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full font-medium">{colTasks.length}</span>
-                            </div>
-
-                            {/* Tasks list */}
-                            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                                {colTasks.length === 0 ? (
-                                    <div className="flex-1 border border-dashed border-zinc-800/80 rounded-xl flex items-center justify-center p-8 text-center">
-                                        <span className="text-xs text-zinc-650">Suelta tareas aquí</span>
-                                    </div>
-                                ) : (
-                                    colTasks.map(task => (
-                                        <div
-                                            key={task.id}
-                                            draggable
-                                            onDragStart={(e) => onDragStart(e, task)}
-                                            className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 p-4 rounded-xl cursor-grab active:cursor-grabbing transition duration-200 shadow-md flex flex-col gap-2 relative group"
-                                        >
-                                            {task.is_running && (
-                                                <div className="absolute top-2 right-2 flex h-2 w-2">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                                </div>
-                                            )}
-                                            
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider truncate max-w-[100px]">{task.project}</span>
-                                                <div className="flex flex-wrap items-center gap-1 justify-end min-w-0">
-                                                    {task.category && (
-                                                        <span 
-                                                            className="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
-                                                            style={{ 
-                                                                backgroundColor: `${task.category_color}15`, 
-                                                                color: task.category_color,
-                                                                border: `1px solid ${task.category_color}30`
-                                                            }}
-                                                        >
-                                                            {task.category}
-                                                        </span>
-                                                    )}
-                                                    {task.tags && task.tags.map(t => (
-                                                        <span 
-                                                            key={t.name}
-                                                            className="text-[9px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wider"
-                                                            style={{ 
-                                                                backgroundColor: `${t.color}15`, 
-                                                                color: t.color,
-                                                                border: `1px solid ${t.color}30`
-                                                            }}
-                                                        >
-                                                            {t.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="text-sm font-bold text-zinc-100 group-hover:text-brand-400 transition-colors duration-200 line-clamp-2">{task.title}</div>
-                                            
-                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-500">
-                                                <span className="font-mono flex items-center text-zinc-400">
-                                                    <i className="fa-solid fa-stopwatch mr-1.5 text-zinc-650"></i>
-                                                    {formatTime(task.time_spent_secs)}
-                                                </span>
-                                                <a href={`/tasks/${task.id}/edit/`} className="text-brand-400 hover:underline flex items-center">
-                                                    <i className="fa-solid fa-pen-to-square mr-1"></i> Editar
-                                                </a>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
     }
 
-    const container = document.getElementById('kanban-root');
-    if (ReactDOM.createRoot) {
-        const root = ReactDOM.createRoot(container);
-        root.render(<KanbanBoard />);
-    } else {
-        ReactDOM.render(<KanbanBoard />, container);
-    }
-</script>
-
-<script>
-    // Manual Babel compiler execution
-    window.addEventListener('load', function() {
-        const container = document.getElementById('kanban-root');
-        try {
-            console.log("Starting manual Babel compilation...");
-            const jsxCode = document.getElementById('kanban-jsx').textContent;
-            
-            if (typeof Babel === 'undefined') {
-                throw new Error("Babel is not defined. Babel Standalone script failed to load.");
-            }
-            if (typeof React === 'undefined') {
-                throw new Error("React is not defined. React script failed to load.");
-            }
-            if (typeof ReactDOM === 'undefined') {
-                throw new Error("ReactDOM is not defined. ReactDOM script failed to load.");
-            }
-            
-            console.log("Compiling JSX code...");
-            const compiledCode = Babel.transform(jsxCode, {
-                presets: ['react', 'env']
-            }).code;
-            
-            console.log("Executing compiled React code...");
-            const script = document.createElement('script');
-            script.text = compiledCode;
-            document.body.appendChild(script);
-            console.log("Kanban board loaded successfully!");
-        } catch (error) {
-            console.error("Kanban Board Error:", error);
-            container.innerHTML = `
-                <div class="p-6 bg-rose-950/20 border border-rose-500/30 rounded-2xl text-rose-400 text-xs space-y-2 max-w-xl mx-auto mt-10">
-                    <div class="font-bold text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
-                        Error al cargar el Tablero Kanban
-                    </div>
-                    <p class="text-zinc-400">Hubo un fallo en la compilación o ejecución del componente React:</p>
-                    <pre class="bg-zinc-950 p-3 rounded font-mono text-[10px] text-zinc-300 overflow-x-auto whitespace-pre-wrap">${error.stack || error.message}</pre>
-                </div>
-            `;
-        }
-    });
+    window.addEventListener('load', fetchTasks);
+    window.addEventListener('time-log-updated', fetchTasks);
+    setInterval(fetchTasks, 10000);
+})();
 </script>
 
 <script>
@@ -520,6 +459,7 @@
     let subtaskChart = null;
 
     async function loadCharts() {
+        if (document.hidden) return;
         try {
             const response = await fetch('/api/dashboard/charts-data/');
             const data = await response.json();

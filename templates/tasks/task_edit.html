@@ -51,8 +51,8 @@
                     </div>
                     <div>
                         <label for="status" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Estado</label>
-                        <select name="status" id="status" disabled
-                                class="w-full px-3 py-2.5 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-550 cursor-not-allowed text-sm">
+                        <select name="status" id="status"
+                                class="w-full px-3 py-2.5 border border-zinc-800 bg-zinc-950 rounded-xl text-zinc-300 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm transition duration-200">
                             <option value="PENDING" {% if task.status == 'PENDING' %}selected{% endif %}>Pendiente</option>
                             <option value="IN_PROGRESS" {% if task.status == 'IN_PROGRESS' %}selected{% endif %}>En Progreso</option>
                             <option value="TESTING" {% if task.status == 'TESTING' %}selected{% endif %}>En pruebas</option>
@@ -184,7 +184,7 @@
         document.querySelectorAll('.markdown-content').forEach(el => {
             const rawMarkdown = el.getAttribute('data-markdown');
             if (rawMarkdown) {
-                el.innerHTML = marked.parse(rawMarkdown);
+                el.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(marked.parse(rawMarkdown)) : marked.parse(rawMarkdown);
             }
         });
     }
@@ -206,8 +206,9 @@
             tabWrite.className = 'px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-250 transition border border-transparent';
             tabPreview.className = 'px-2.5 py-1 rounded bg-zinc-850 text-brand-400 font-bold border border-zinc-800';
             
-            // Compile Markdown
-            previewContainer.innerHTML = marked.parse(descText || "*Sin descripción.*");
+            // Compile Markdown with sanitization
+            const parsed = marked.parse(descText || "*Sin descripción.*");
+            previewContainer.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(parsed) : parsed;
         } else {
             editorContainer.classList.remove('hidden');
             previewContainer.classList.add('hidden');

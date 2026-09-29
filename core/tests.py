@@ -181,3 +181,60 @@ class ProjectManagementTests(TestCase):
         # Note icon linking to the detail page must be present
         self.assertIn(f'/tasks/{task.id}/detail/', html)
         self.assertIn("fa-note-sticky", html)
+
+    def test_calendar_view_invalid_params_does_not_500(self):
+        """Verify calendar_view safely handles invalid year/month query params without throwing 500."""
+        self.client.force_login(self.user)
+        # Non-numeric query params
+        res = self.client.get('/calendar/?year=invalid&month=99')
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("Calendario de Tareas", res.content.decode())
+
+        # Negative / zero month
+        res2 = self.client.get('/calendar/?year=2026&month=0')
+        self.assertEqual(res2.status_code, 200)
+
+    def test_safe_project_cascade_delete(self):
+        """Verify that deleting a Project with tasks does not raise DoesNotExist."""
+        project2 = Project.objects.create(user=self.user, name="Proyecto Cascada")
+        Task.objects.create(user=self.user, project=project2, title="Tarea 1")
+        Task.objects.create(user=self.user, project=project2, title="Tarea 2")
+        
+        # Deleting project should succeed cleanly
+        project2.delete()
+        self.assertEqual(Project.objects.filter(id=project2.id).count(), 0)
+
+    def test_subtask_total_time_formatted(self):
+        """Verify total_time_formatted property on Subtask."""
+        task = Task.objects.create(user=self.user, project=self.project, title="Tarea Subtask Time")
+        subtask = Subtask.objects.create(user=self.user, task=task, title="Subtarea Time")
+        self.assertEqual(subtask.total_time_formatted, "00:00:00")
+
+    def test_task_edit_updates_status(self):
+        """Verify that editing a task updates its status and project status."""
+        task = Task.objects.create(user=self.user, project=self.project, title="Tarea Status Edit", status="PENDING")
+        self.client.force_login(self.user)
+        res = self.client.post(f'/tasks/{task.id}/edit/', {
+            'title': 'Tarea Status Edit Updated',
+            'project': self.project.id,
+            'status': 'COMPLETED'
+        })
+        self.assertEqual(res.status_code, 302)
+        task.refresh_from_db()
+        self.assertEqual(task.status, 'COMPLETED')
+        self.assertEqual(task.title, 'Tarea Status Edit Updated')
+
+    def test_task_update_status_api(self):
+        """Verify task_update_status_api works via POST."""
+        task = Task.objects.create(user=self.user, project=self.project, title="Tarea API Status", status="PENDING")
+        self.client.force_login(self.user)
+        res = self.client.post(
+            f'/api/tasks/{task.id}/update-status/',
+            data='{"status": "IN_PROGRESS"}',
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json().get('task_status'), 'IN_PROGRESS')
+        task.refresh_from_db()
+        self.assertEqual(task.status, 'IN_PROGRESS')
+

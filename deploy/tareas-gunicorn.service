@@ -5,10 +5,10 @@ After=network.target
 [Service]
 User=kike
 Group=kike
-WorkingDirectory=/home/kike/proyectos/tareas
-EnvironmentFile=/home/kike/proyectos/tareas/.env
-ExecStart=/home/kike/proyectos/tareas/.venv/bin/gunicorn tareas.wsgi:application \
-    --config /home/kike/proyectos/tareas/gunicorn.conf.py
+WorkingDirectory=/home/kike/Proyectos/Django/tareas
+EnvironmentFile=/home/kike/Proyectos/Django/tareas/.env
+ExecStart=/home/kike/Proyectos/Django/tareas/.venv/bin/gunicorn tareas.wsgi:application \
+    --config /home/kike/Proyectos/Django/tareas/gunicorn.conf.py
 Restart=always
 RestartSec=5
 

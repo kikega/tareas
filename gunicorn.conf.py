@@ -10,8 +10,11 @@ timeout = 120
 graceful_timeout = 30
 keepalive = 5
 
-accesslog = str(BASE_DIR / 'logs' / 'gunicorn_access.log')
-errorlog = str(BASE_DIR / 'logs' / 'gunicorn_error.log')
+log_dir = BASE_DIR / 'logs'
+log_dir.mkdir(parents=True, exist_ok=True)
+
+accesslog = str(log_dir / 'gunicorn_access.log')
+errorlog = str(log_dir / 'gunicorn_error.log')
 loglevel = os.getenv('GUNICORN_LOG_LEVEL', 'info')
 
 capture_output = True

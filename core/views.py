@@ -10,19 +10,22 @@ from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 
-from .models import User, Project, Task, Subtask, Category, Tag, TimeLog
+from django.core.exceptions import ValidationError
+from .models import User, Project, Task, Subtask, Category, Tag, TimeLog, validate_markdown
 
 # --- AUTHENTICATION ---
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
         
+    is_initial_setup = not User.objects.exists()
+    
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
         
         # Verify if user exists, if not and it's a single-user system, create the first user
-        if not User.objects.exists():
+        if is_initial_setup:
             user = User.objects.create_superuser(email=email, password=password)
             user.first_name = "Administrador"
             user.save()
@@ -37,7 +40,7 @@ def login_view(request):
         else:
             messages.error(request, "Credenciales incorrectas")
             
-    return render(request, 'login.html')
+    return render(request, 'login.html', {'is_initial_setup': is_initial_setup})
 
 def logout_view(request):
     logout(request)
@@ -98,12 +101,22 @@ def dashboard_view(request):
 def calendar_view(request):
     # Build a simple calendar context of the current month
     now = timezone.now()
-    year = int(request.GET.get('year', now.year))
-    month = int(request.GET.get('month', now.month))
+    try:
+        year = int(request.GET.get('year', now.year))
+        month = int(request.GET.get('month', now.month))
+        if month < 1 or month > 12:
+            month = now.month
+            year = now.year
+    except (ValueError, TypeError):
+        year = now.year
+        month = now.month
     
     import calendar
-    cal = calendar.HTMLCalendar(calendar.MONDAY)
-    month_name = calendar.month_name[month]
+    SPANISH_MONTHS = [
+        "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+    month_name = SPANISH_MONTHS[month]
     
     _, num_days = calendar.monthrange(year, month)
     
@@ -195,18 +208,18 @@ def project_delete(request, pk):
     return redirect('project_list_create')
 
 @login_required
+@require_POST
 def project_edit(request, pk):
     project = get_object_or_404(Project, pk=pk, user=request.user)
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        description = request.POST.get('description', '')
-        if name:
-            project.name = name
-            project.description = description
-            project.save()
-            messages.success(request, "Proyecto actualizado con éxito.")
-        else:
-            messages.error(request, "El nombre del proyecto es obligatorio.")
+    name = request.POST.get('name')
+    description = request.POST.get('description', '')
+    if name:
+        project.name = name
+        project.description = description
+        project.save()
+        messages.success(request, "Proyecto actualizado con éxito.")
+    else:
+        messages.error(request, "El nombre del proyecto es obligatorio.")
     return redirect('project_list_create')
 
 @login_required
@@ -257,6 +270,13 @@ def task_list_create(request):
         tag_ids = request.POST.getlist('tags')
         description = request.POST.get('description', '')
         attachment = request.FILES.get('attachment')
+        
+        if attachment:
+            try:
+                validate_markdown(attachment)
+            except ValidationError as e:
+                messages.error(request, e.message)
+                return redirect('task_list_create')
         
         project = get_object_or_404(Project, id=project_id, user=request.user)
         category = None
@@ -320,8 +340,23 @@ def task_edit(request, pk):
         tag_ids = request.POST.getlist('tags')
         task.description = request.POST.get('description', '')
         
+        new_status = request.POST.get('status')
+        if new_status in dict(Task.STATUS_CHOICES):
+            if new_status == 'COMPLETED' and task.status != 'COMPLETED':
+                task.finalize_timer()
+            elif new_status in ['PENDING', 'TESTING'] and task.is_running:
+                task.stop_timer()
+                task.status = new_status
+            else:
+                task.status = new_status
+        
         if request.FILES.get('attachment'):
-            task.attachment = request.FILES.get('attachment')
+            try:
+                validate_markdown(request.FILES.get('attachment'))
+                task.attachment = request.FILES.get('attachment')
+            except ValidationError as e:
+                messages.error(request, e.message)
+                return redirect('task_edit', pk=task.id)
             
         task.project = get_object_or_404(Project, id=project_id, user=request.user)
         if category_id:
@@ -441,15 +476,23 @@ def settings_view(request):
     return render(request, 'settings/settings.html', context)
 
 @login_required
+@require_POST
 def category_list_create(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        description = request.POST.get('description', '')
-        color = request.POST.get('color', '#3b82f6')
-        attachment = request.FILES.get('attachment')
-        if name:
-            Category.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
-            messages.success(request, "Categoría creada con éxito.")
+    name = request.POST.get('name')
+    description = request.POST.get('description', '')
+    color = request.POST.get('color', '#3b82f6')
+    attachment = request.FILES.get('attachment')
+    if not name:
+        messages.error(request, "El nombre de la categoría es obligatorio.")
+        return redirect('settings')
+    if attachment:
+        try:
+            validate_markdown(attachment)
+        except ValidationError as e:
+            messages.error(request, e.message)
+            return redirect('settings')
+    Category.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
+    messages.success(request, "Categoría creada con éxito.")
     return redirect('settings')
 
 @login_required
@@ -461,15 +504,23 @@ def category_delete(request, pk):
     return redirect('settings')
 
 @login_required
+@require_POST
 def tag_list_create(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        description = request.POST.get('description', '')
-        color = request.POST.get('color', '#ef4444')
-        attachment = request.FILES.get('attachment')
-        if name:
-            Tag.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
-            messages.success(request, "Etiqueta creada con éxito.")
+    name = request.POST.get('name')
+    description = request.POST.get('description', '')
+    color = request.POST.get('color', '#ef4444')
+    attachment = request.FILES.get('attachment')
+    if not name:
+        messages.error(request, "El nombre de la etiqueta es obligatorio.")
+        return redirect(reverse('settings') + '?tab=etiquetas')
+    if attachment:
+        try:
+            validate_markdown(attachment)
+        except ValidationError as e:
+            messages.error(request, e.message)
+            return redirect(reverse('settings') + '?tab=etiquetas')
+    Tag.objects.create(user=request.user, name=name, description=description, color=color, attachment=attachment)
+    messages.success(request, "Etiqueta creada con éxito.")
     return redirect(reverse('settings') + '?tab=etiquetas')
 
 @login_required
@@ -623,26 +674,25 @@ def tasks_api(request):
     return JsonResponse({'tasks': tasks_list})
 
 @login_required
-@csrf_exempt  # We can bypass CSRF for this API if verified or read CSRF token
+@require_POST
 def task_update_status_api(request, task_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            new_status = data.get('status')
-            if new_status in ['PENDING', 'IN_PROGRESS', 'TESTING', 'COMPLETED']:
-                task = get_object_or_404(Task, id=task_id, user=request.user)
+    try:
+        data = json.loads(request.body)
+        new_status = data.get('status')
+        if new_status in ['PENDING', 'IN_PROGRESS', 'TESTING', 'COMPLETED']:
+            task = get_object_or_404(Task, id=task_id, user=request.user)
+            
+            # If finalizing, stop timer
+            if new_status == 'COMPLETED':
+                task.finalize_timer()
+            else:
+                task.status = new_status
+                # If moving away from progress, stop timer but don't mark completed
+                if new_status in ['PENDING', 'TESTING'] and task.is_running:
+                    task.stop_timer()
+                task.save()
                 
-                # If finalizing, stop timer
-                if new_status == 'COMPLETED':
-                    task.finalize_timer()
-                else:
-                    task.status = new_status
-                    # If moving away from progress, stop timer but don't mark completed
-                    if new_status in ['PENDING', 'TESTING'] and task.is_running:
-                        task.stop_timer()
-                    task.save()
-                    
-                return JsonResponse({'status': 'success', 'task_status': task.status})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+            return JsonResponse({'status': 'success', 'task_status': task.status})
+        return JsonResponse({'status': 'error', 'message': 'Estado inválido'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

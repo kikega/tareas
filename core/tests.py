@@ -1,9 +1,10 @@
+import os
+import time
+import datetime
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
-import time
-import datetime
 
 from .models import User, Project, Task, Subtask, Category, Tag, TimeLog, validate_markdown
 
@@ -289,7 +290,7 @@ class ProjectManagementTests(TestCase):
         res = self.client.get(f'/tasks/{task.id}/attachment/')
         self.assertEqual(res.status_code, 200)
         content = res.content.decode()
-        self.assertIn("requisitos.md", content)
+        self.assertIn(os.path.basename(task.attachment.name), content)
         self.assertIn("# Requisitos", content)
         self.assertIn("Volver atrás", content)
         self.assertIn("Cerrar", content)
@@ -342,5 +343,41 @@ class ProjectManagementTests(TestCase):
         self.assertEqual(res.status_code, 200)
         content = res.content.decode()
         self.assertIn(f'/tasks/{task.id}/attachment/', content)
+
+    def test_task_list_grouped_by_project(self):
+        """Verify that tasks are grouped by project in the task list."""
+        cat_dev = Category.objects.create(user=self.user, name="Desarrollo", color="#10b981")
+        proj2 = Project.objects.create(user=self.user, name="Proyecto Alpha", category=cat_dev)
+        proj3 = Project.objects.create(user=self.user, name="Proyecto Beta")
+
+        Task.objects.create(user=self.user, project=proj2, title="Tarea Alpha 1")
+        Task.objects.create(user=self.user, project=proj2, title="Tarea Alpha 2")
+        Task.objects.create(user=self.user, project=proj3, title="Tarea Beta 1")
+
+        self.client.force_login(self.user)
+        res = self.client.get('/tasks/')
+        self.assertEqual(res.status_code, 200)
+
+        # Check context has project_groups
+        project_groups = res.context['project_groups']
+        self.assertTrue(len(project_groups) >= 2)
+
+        alpha_group = next((g for g in project_groups if g['project'].id == proj2.id), None)
+        self.assertIsNotNone(alpha_group)
+        self.assertEqual(len(alpha_group['tasks']), 2)
+
+        beta_group = next((g for g in project_groups if g['project'].id == proj3.id), None)
+        self.assertIsNotNone(beta_group)
+        self.assertEqual(len(beta_group['tasks']), 1)
+
+        html = res.content.decode()
+        self.assertIn("Proyecto Alpha", html)
+        self.assertIn("Proyecto Beta", html)
+        self.assertIn("Tarea Alpha 1", html)
+        self.assertIn("Tarea Alpha 2", html)
+        self.assertIn("Tarea Beta 1", html)
+        self.assertIn(f"project-card-{proj2.id}", html)
+        self.assertIn(f"project-card-{proj3.id}", html)
+        self.assertIn("Desarrollo", html)  # Category badge
 
 

@@ -113,6 +113,14 @@ class Project(models.Model):
         return total
 
     @property
+    def total_time_formatted(self):
+        secs = self.total_time_seconds
+        h = secs // 3600
+        m = (secs % 3600) // 60
+        s = secs % 60
+        return f"{h:02d}:{m:02d}:{s:02d}"
+
+    @property
     def completed_tasks_count(self):
         return self.tasks.filter(status='COMPLETED').count()
 

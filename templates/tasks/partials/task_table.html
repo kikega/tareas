@@ -1,16 +1,84 @@
-{% for task in tasks %}
-    {% include 'tasks/partials/task_row.html' %}
-{% empty %}
-<tr>
-    <td colspan="6" class="px-6 py-12 text-center text-zinc-500 text-sm">
-        <div class="flex flex-col items-center justify-center space-y-2">
-            <i class="fa-solid fa-clipboard-list text-2xl text-zinc-650"></i>
-            {% if current_tab == 'historicos' %}
-            <span>No hay tareas completadas.</span>
-            {% else %}
-            <span>No se encontraron tareas que coincidan con los filtros.</span>
+{% for group in project_groups %}
+<div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-200" id="project-card-{{ group.project.id }}">
+    <!-- Project Group Header -->
+    <div class="bg-zinc-950/80 px-5 py-3.5 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none"
+         onclick="toggleProjectGroup('project-group-{{ group.project.id }}')">
+        <!-- Project Info -->
+        <div class="flex items-center space-x-3 min-w-0">
+            <button type="button" 
+                    class="text-zinc-400 hover:text-zinc-200 p-1 rounded-lg hover:bg-zinc-800/80 transition"
+                    title="Contraer / Expandir tareas de este proyecto">
+                <i id="chevron-project-group-{{ group.project.id }}" class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+            </button>
+            <div class="bg-brand-500/10 text-brand-400 p-2 rounded-xl border border-brand-500/20 shrink-0">
+                <i class="fa-solid fa-folder-open text-base"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center space-x-2.5 flex-wrap">
+                    <span class="text-base font-bold text-white tracking-tight truncate">{{ group.project.name }}</span>
+                    {% if group.project.category %}
+                    <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-md tracking-wider shrink-0" 
+                          style="background-color: {{ group.project.category.color }}20; color: {{ group.project.category.color }}; border: 1px solid {{ group.project.category.color }}40;">
+                        {{ group.project.category.name }}
+                    </span>
+                    {% endif %}
+                    <span class="text-xs text-zinc-400 font-medium bg-zinc-800 px-2.5 py-0.5 rounded-full shrink-0">
+                        {{ group.tasks|length }} tarea{{ group.tasks|length|pluralize }}
+                    </span>
+                </div>
+                {% if group.project.description %}
+                <p class="text-xs text-zinc-500 truncate mt-0.5 max-w-xl">{{ group.project.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Project Stats & Quick Action -->
+        <div class="flex items-center space-x-4 shrink-0 sm:self-center pl-8 sm:pl-0" onclick="event.stopPropagation()">
+            <div class="text-xs font-mono text-zinc-400 flex items-center bg-zinc-900/90 border border-zinc-800/80 px-3 py-1.5 rounded-xl" title="Tiempo acumulado en este proyecto">
+                <i class="fa-solid fa-stopwatch text-zinc-500 mr-2"></i>
+                <span>{{ group.total_time_formatted }}</span>
+            </div>
+            {% if current_tab != 'historicos' %}
+            <button type="button" 
+                    onclick="openNewTaskModalForProject('{{ group.project.id }}')" 
+                    class="text-xs text-brand-400 hover:text-brand-300 bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/20 px-3 py-1.5 rounded-xl font-semibold transition flex items-center shadow-sm"
+                    title="Añadir tarea a este proyecto">
+                <i class="fa-solid fa-plus mr-1.5 text-[10px]"></i>Añadir tarea
+            </button>
             {% endif %}
         </div>
-    </td>
-</tr>
+    </div>
+
+    <!-- Project Tasks Table -->
+    <div id="project-group-{{ group.project.id }}" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-zinc-800/80 bg-zinc-950/40 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <th class="px-6 py-3">Detalles de la Tarea</th>
+                    <th class="px-6 py-3">Estado</th>
+                    <th class="px-6 py-3">Etiquetas</th>
+                    <th class="px-6 py-3">Tiempo</th>
+                    <th class="px-6 py-3 text-center">Docs</th>
+                    <th class="px-6 py-3 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/40">
+                {% for task in group.tasks %}
+                    {% include 'tasks/partials/task_row.html' %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% empty %}
+<div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-500 shadow-xl">
+    <div class="flex flex-col items-center justify-center space-y-3">
+        <i class="fa-solid fa-clipboard-list text-3xl text-zinc-650"></i>
+        {% if current_tab == 'historicos' %}
+        <span class="text-sm font-medium">No hay tareas completadas.</span>
+        {% else %}
+        <span class="text-sm font-medium">No se encontraron tareas que coincidan con los filtros.</span>
+        {% endif %}
+    </div>
+</div>
 {% endfor %}

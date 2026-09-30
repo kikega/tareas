@@ -323,7 +323,7 @@ def task_list_create(request):
         return redirect('task_list_create')
         
     tab = request.GET.get('tab', 'activos')
-    tasks = Task.objects.filter(user=request.user).select_related('project', 'category').prefetch_related('tags', 'time_logs').order_by('-created_at')
+    tasks = Task.objects.filter(user=request.user).select_related('project', 'project__category', 'category').prefetch_related('tags', 'time_logs', 'subtasks__time_logs').order_by('project__name', '-created_at')
     if tab == 'historicos':
         tasks = tasks.filter(status='COMPLETED')
     else:
@@ -341,11 +341,37 @@ def task_list_create(request):
     if status_filter:
         tasks = tasks.filter(status=status_filter)
         
+    project_groups = []
+    projects_dict = {}
+    for task in tasks:
+        p_id = task.project_id
+        if p_id not in projects_dict:
+            projects_dict[p_id] = {
+                'project': task.project,
+                'tasks': [],
+                'total_time_seconds': 0,
+            }
+        projects_dict[p_id]['tasks'].append(task)
+        projects_dict[p_id]['total_time_seconds'] += task.total_time_seconds
+
+    for group in projects_dict.values():
+        secs = group['total_time_seconds']
+        h = secs // 3600
+        m = (secs % 3600) // 60
+        s = secs % 60
+        group['total_time_formatted'] = f"{h:02d}:{m:02d}:{s:02d}"
+        project_groups.append(group)
+
     if request.headers.get('HX-Request'):
-        return render(request, 'tasks/partials/task_table.html', {'tasks': tasks, 'current_tab': tab})
+        return render(request, 'tasks/partials/task_table.html', {
+            'tasks': tasks,
+            'project_groups': project_groups,
+            'current_tab': tab
+        })
         
     context = {
         'tasks': tasks,
+        'project_groups': project_groups,
         'projects': projects,
         'categories': categories,
         'tags': tags,

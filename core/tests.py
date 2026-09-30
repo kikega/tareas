@@ -276,4 +276,71 @@ class ProjectManagementTests(TestCase):
         self.assertEqual(res_filter_empty.status_code, 200)
         self.assertNotIn("Proyecto Web Actualizado", res_filter_empty.content.decode())
 
+    def test_task_attachment_view_get_and_display(self):
+        """Verify task_attachment_view renders markdown viewer and navigation buttons."""
+        md_file = SimpleUploadedFile("requisitos.md", b"# Requisitos\n- Item 1\n- Item 2", content_type="text/markdown")
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea con Markdown",
+            attachment=md_file
+        )
+        self.client.force_login(self.user)
+        res = self.client.get(f'/tasks/{task.id}/attachment/')
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode()
+        self.assertIn("requisitos.md", content)
+        self.assertIn("# Requisitos", content)
+        self.assertIn("Volver atrás", content)
+        self.assertIn("Cerrar", content)
+        self.assertIn("Visualizar HTML", content)
+        self.assertIn("Descargar .md", content)
+
+    def test_task_attachment_view_post_edit(self):
+        """Verify that editing markdown content via POST updates the file."""
+        md_file = SimpleUploadedFile("especificaciones.md", b"# Version Inicial", content_type="text/markdown")
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea para editar MD",
+            attachment=md_file
+        )
+        self.client.force_login(self.user)
+        updated_text = "# Version Modificada\nTexto actualizado y guardado correctamente."
+        res = self.client.post(f'/tasks/{task.id}/attachment/', {'content': updated_text})
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, f'/tasks/{task.id}/attachment/')
+
+        # Verify the saved content via GET
+        res_view = self.client.get(f'/tasks/{task.id}/attachment/')
+        self.assertEqual(res_view.status_code, 200)
+        self.assertIn("Version Modificada", res_view.content.decode())
+
+    def test_task_attachment_view_without_attachment_redirects(self):
+        """Verify that accessing task_attachment_view on a task with no attachment redirects."""
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea sin archivo"
+        )
+        self.client.force_login(self.user)
+        res = self.client.get(f'/tasks/{task.id}/attachment/')
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, f'/tasks/{task.id}/detail/')
+
+    def test_task_row_links_to_attachment_view_instead_of_direct_download(self):
+        """Verify the task row icon links to task_attachment_view rather than directly downloading."""
+        md_file = SimpleUploadedFile("guia.md", b"# Guia", content_type="text/markdown")
+        task = Task.objects.create(
+            user=self.user,
+            project=self.project,
+            title="Tarea con Guia",
+            attachment=md_file
+        )
+        self.client.force_login(self.user)
+        res = self.client.get('/tasks/')
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode()
+        self.assertIn(f'/tasks/{task.id}/attachment/', content)
+
 

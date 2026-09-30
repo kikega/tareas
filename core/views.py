@@ -1,3 +1,4 @@
+import os
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -9,7 +10,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
-
+from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from .models import User, Project, Task, Subtask, Category, Tag, TimeLog, validate_markdown
 
@@ -429,6 +430,50 @@ def task_detail(request, pk):
         user=request.user,
     )
     return render(request, 'tasks/task_detail.html', {'task': task})
+
+@login_required
+def task_attachment_view(request, pk):
+    task = get_object_or_404(Task, pk=pk, user=request.user)
+    if not task.attachment:
+        messages.error(request, "Esta tarea no tiene ningún archivo adjunto.")
+        return redirect('task_detail', pk=task.id)
+
+    filename = os.path.basename(task.attachment.name)
+
+    if request.method == 'POST':
+        new_content = request.POST.get('content', '')
+        try:
+            if hasattr(task.attachment, 'path') and os.path.exists(task.attachment.path):
+                with open(task.attachment.path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+            else:
+                task.attachment.save(filename, ContentFile(new_content.encode('utf-8')), save=True)
+            messages.success(request, f"Archivo '{filename}' guardado correctamente.")
+        except Exception as e:
+            messages.error(request, f"Error al guardar el archivo: {e}")
+        return redirect('task_attachment_view', pk=task.id)
+
+    content = ""
+    try:
+        if hasattr(task.attachment, 'path') and os.path.exists(task.attachment.path):
+            with open(task.attachment.path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        else:
+            with task.attachment.open('r') as f:
+                raw_data = f.read()
+                if isinstance(raw_data, bytes):
+                    content = raw_data.decode('utf-8', errors='replace')
+                else:
+                    content = str(raw_data)
+    except Exception as e:
+        messages.error(request, f"No se pudo leer el archivo adjunto: {e}")
+
+    context = {
+        'task': task,
+        'filename': filename,
+        'content': content,
+    }
+    return render(request, 'tasks/task_attachment.html', context)
 
 # --- SUBTASKS ---
 @login_required

@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+
+{% block title %}Adjunto: {{ filename }} | {{ task.title }} - GestorPro{% endblock %}
+
+{% block head %}
+<!-- Marked library for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+    /* Estilos para renderizado de Markdown */
+    .markdown-body {
+        color: #d4d4d8;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    .markdown-body h1 {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-top: 1.5rem;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #27272a;
+    }
+    .markdown-body h2 {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #f4f4f5;
+        margin-top: 1.35rem;
+        margin-bottom: 0.65rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid #27272a;
+    }
+    .markdown-body h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #e4e4e7;
+        margin-top: 1.15rem;
+        margin-bottom: 0.5rem;
+    }
+    .markdown-body h4 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #d4d4d8;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .markdown-body p {
+        margin-top: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .markdown-body a {
+        color: #42D3F2;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        transition: color 0.15s ease;
+    }
+    .markdown-body a:hover {
+        color: #3BB8DB;
+    }
+    .markdown-body ul {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin: 0.65rem 0;
+    }
+    .markdown-body ol {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin: 0.65rem 0;
+    }
+    .markdown-body li {
+        margin-bottom: 0.25rem;
+    }
+    .markdown-body blockquote {
+        border-left: 4px solid #3BB8DB;
+        padding: 0.65rem 1rem;
+        color: #a1a1aa;
+        margin: 1rem 0;
+        background: rgba(59, 184, 219, 0.05);
+        border-radius: 0 0.5rem 0.5rem 0;
+        font-style: italic;
+    }
+    .markdown-body code {
+        background-color: #18181b;
+        color: #38bdf8;
+        padding: 0.2rem 0.45rem;
+        border-radius: 0.375rem;
+        font-size: 0.85em;
+        border: 1px solid #27272a;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .markdown-body pre {
+        background-color: #09090b;
+        border: 1px solid #27272a;
+        border-radius: 0.75rem;
+        padding: 1.15rem;
+        overflow-x: auto;
+        margin: 1rem 0;
+    }
+    .markdown-body pre code {
+        background-color: transparent;
+        padding: 0;
+        border: none;
+        color: #f4f4f5;
+        font-size: 0.875rem;
+    }
+    .markdown-body table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        overflow-x: auto;
+        display: block;
+    }
+    .markdown-body th, .markdown-body td {
+        border: 1px solid #27272a;
+        padding: 0.65rem 1rem;
+        text-align: left;
+    }
+    .markdown-body th {
+        background-color: #18181b;
+        font-weight: 600;
+        color: #f4f4f5;
+    }
+    .markdown-body tr:nth-child(even) td {
+        background-color: #121214;
+    }
+    .markdown-body hr {
+        border: 0;
+        border-top: 1px solid #27272a;
+        margin: 1.75rem 0;
+    }
+    .markdown-body img {
+        max-width: 100%;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+        border: 1px solid #27272a;
+    }
+    .markdown-body input[type="checkbox"] {
+        margin-right: 0.5rem;
+        accent-color: #3BB8DB;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <!-- Breadcrumb & Top Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
+        <!-- Navigation Breadcrumbs -->
+        <nav class="flex items-center space-x-2 text-xs text-zinc-400">
+            <a href="{% url 'task_list_create' %}" class="hover:text-zinc-200 transition">Tareas</a>
+            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+            <a href="{% url 'task_detail' task.id %}" class="hover:text-zinc-200 transition truncate max-w-[200px]" title="{{ task.title }}">{{ task.title }}</a>
+            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+            <span class="text-brand-400 font-medium truncate max-w-[200px]">{{ filename }}</span>
+        </nav>
+
+        <!-- Navigation Buttons: Volver atrás & Cerrar -->
+        <div class="flex items-center space-x-2">
+            <button type="button" onclick="historyBackFallback()" class="bg-zinc-800 hover:bg-zinc-750 text-zinc-300 hover:text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700/80 flex items-center shadow-sm" title="Volver a la página anterior">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Volver atrás
+            </button>
+            <a href="{% url 'task_list_create' %}" class="bg-zinc-800 hover:bg-zinc-750 text-zinc-300 hover:text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700/80 flex items-center shadow-sm" title="Cerrar y volver a la lista de tareas">
+                <i class="fa-solid fa-xmark mr-2 text-zinc-400"></i>Cerrar
+            </a>
+        </div>
+    </div>
+
+    <!-- Header Card -->
+    <div class="bg-zinc-900 border border-zinc-800 p-5 md:p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="bg-brand-600/10 border border-brand-500/20 p-3.5 rounded-xl text-brand-400 flex items-center justify-center shrink-0">
+                <i class="fa-brands fa-markdown text-3xl"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-xl font-bold text-white tracking-tight truncate">{{ filename }}</h1>
+                    <span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[11px] font-mono shrink-0">Markdown</span>
+                </div>
+                <div class="flex items-center space-x-2 mt-1 text-xs text-zinc-400">
+                    <span>Tarea:</span>
+                    <a href="{% url 'task_detail' task.id %}" class="text-zinc-200 hover:text-brand-300 font-medium underline truncate max-w-xs">{{ task.title }}</a>
+                    {% if task.project %}
+                    <span class="text-zinc-600">•</span>
+                    <span class="text-zinc-500 truncate max-w-[150px]"><i class="fa-solid fa-folder mr-1"></i>{{ task.project.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode Buttons & Download -->
+        <div class="flex items-center flex-wrap gap-2">
+            <!-- Mode Switch Tabs -->
+            <div class="bg-zinc-950 p-1 rounded-xl border border-zinc-800 flex items-center space-x-1">
+                <button type="button" id="tab-view-btn" onclick="switchMode('view')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center bg-brand-600 text-white shadow">
+                    <i class="fa-solid fa-eye mr-1.5"></i>Visualizar HTML
+                </button>
+                <button type="button" id="tab-edit-btn" onclick="switchMode('edit')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center text-zinc-400 hover:text-zinc-200">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i>Editar
+                </button>
+                <button type="button" id="tab-split-btn" onclick="switchMode('split')"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center text-zinc-400 hover:text-zinc-200 hidden lg:flex">
+                    <i class="fa-solid fa-table-columns mr-1.5"></i>Pantalla Dividida
+                </button>
+            </div>
+
+            <!-- Download Button -->
+            <a href="{{ task.attachment.url }}" download class="bg-zinc-800 hover:bg-zinc-750 text-zinc-200 hover:text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700/80 flex items-center shadow-sm" title="Descargar archivo .md original">
+                <i class="fa-solid fa-download mr-1.5 text-brand-400"></i>Descargar .md
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN BODY: Viewer & Editor Containers -->
+    <div id="view-mode-container" class="space-y-4">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl p-6 md:p-8">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-zinc-800/80">
+                <div class="flex items-center space-x-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-code text-brand-400"></i>
+                    <span>Vista previa HTML renderizada</span>
+                </div>
+                <button type="button" onclick="switchMode('edit')" class="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center transition">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i>Editar este documento
+                </button>
+            </div>
+
+            <!-- Rendered Output Target -->
+            <div id="rendered-html-output" class="markdown-body">
+                <!-- Injected via JavaScript -->
+            </div>
+            
+            <div id="empty-content-warning" class="hidden text-center py-12 text-zinc-500">
+                <i class="fa-regular fa-file-lines text-4xl mb-3 block text-zinc-600"></i>
+                <p class="text-sm">El archivo Markdown está vacío.</p>
+                <button type="button" onclick="switchMode('edit')" class="mt-3 text-xs text-brand-400 hover:underline">Haga clic aquí para empezar a escribir contenido.</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT / SPLIT MODE CONTAINER -->
+    <div id="edit-mode-container" class="hidden">
+        <form method="POST" action="{% url 'task_attachment_view' task.id %}" id="markdown-edit-form" class="space-y-4">
+            {% csrf_token %}
+
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+                <!-- Editor Top Bar -->
+                <div class="bg-zinc-950/70 px-5 py-3.5 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3 text-xs text-zinc-400 font-semibold uppercase tracking-wider">
+                        <i class="fa-solid fa-pen text-brand-400"></i>
+                        <span>Editor Markdown</span>
+                        <span id="char-word-count" class="text-[11px] font-mono text-zinc-500 lowercase"></span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="switchMode('view')" class="bg-zinc-800 hover:bg-zinc-750 text-zinc-300 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition border border-zinc-700/80">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-1.5 rounded-xl text-xs font-semibold transition shadow-md flex items-center">
+                            <i class="fa-solid fa-floppy-disk mr-1.5"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Workspace (Single or Split) -->
+                <div id="editor-layout" class="grid grid-cols-1 gap-0">
+                    <!-- Textarea Editor Column -->
+                    <div class="p-4 md:p-5 flex flex-col">
+                        <label for="markdown-raw-input" class="sr-only">Contenido Markdown</label>
+                        <textarea id="markdown-raw-input" name="content" rows="22"
+                                  class="w-full bg-zinc-950 text-zinc-100 font-mono text-sm leading-relaxed p-4 rounded-xl border border-zinc-800 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition shadow-inner"
+                                  placeholder="# Escribe aquí el contenido en formato Markdown...">{{ content }}</textarea>
+                    </div>
+
+                    <!-- Split Live Preview Column (Shown when in split mode) -->
+                    <div id="split-preview-col" class="hidden p-4 md:p-5 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-950/30 overflow-y-auto max-h-[650px]">
+                        <div class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center">
+                            <i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i>Vista Previa en Vivo
+                        </div>
+                        <div id="split-preview-output" class="markdown-body"></div>
+                    </div>
+                </div>
+
+                <!-- Footer with Hints & Save Button -->
+                <div class="bg-zinc-950/50 px-5 py-3 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
+                    <div class="flex items-center space-x-3">
+                        <span><i class="fa-brands fa-markdown text-zinc-400 mr-1"></i>Soporta encabezados (#), listas (*, 1.), tablas, enlaces y código</span>
+                    </div>
+                    <div>
+                        <button type="submit" class="text-brand-400 hover:text-brand-300 font-semibold transition flex items-center">
+                            <i class="fa-solid fa-check mr-1"></i>Guardar archivo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const textarea = document.getElementById('markdown-raw-input');
+    const renderedHtmlOutput = document.getElementById('rendered-html-output');
+    const splitPreviewOutput = document.getElementById('split-preview-output');
+    const emptyWarning = document.getElementById('empty-content-warning');
+    const charWordCount = document.getElementById('char-word-count');
+
+    let currentMode = 'view'; // 'view' | 'edit' | 'split'
+
+    // Smart back button fallback
+    function historyBackFallback() {
+        if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+            window.history.back();
+        } else {
+            window.location.href = "{% url 'task_detail' task.id %}";
+        }
+    }
+
+    // Parse and sanitize markdown safely
+    function renderMarkdown(rawText) {
+        if (!rawText || rawText.trim() === '') {
+            return '';
+        }
+        if (typeof marked === 'undefined') {
+            return rawText;
+        }
+        const parsed = marked.parse(rawText);
+        return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(parsed) : parsed;
+    }
+
+    // Update main viewer
+    function updateRenderedView() {
+        const text = textarea.value;
+        const html = renderMarkdown(text);
+        if (html.trim() === '') {
+            renderedHtmlOutput.innerHTML = '';
+            emptyWarning.classList.remove('hidden');
+        } else {
+            renderedHtmlOutput.innerHTML = html;
+            emptyWarning.classList.add('hidden');
+        }
+        updateStats(text);
+    }
+
+    // Update live split preview
+    function updateLiveSplitPreview() {
+        if (currentMode === 'split') {
+            const text = textarea.value;
+            splitPreviewOutput.innerHTML = renderMarkdown(text);
+            updateStats(text);
+        }
+    }
+
+    // Update statistics (chars & words)
+    function updateStats(text) {
+        const chars = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        charWordCount.textContent = `(${words} palabras, ${chars} caracteres)`;
+    }
+
+    // Switch between view, edit, and split modes
+    function switchMode(mode) {
+        currentMode = mode;
+        const viewContainer = document.getElementById('view-mode-container');
+        const editContainer = document.getElementById('edit-mode-container');
+        const editorLayout = document.getElementById('editor-layout');
+        const splitPreviewCol = document.getElementById('split-preview-col');
+
+        const tabViewBtn = document.getElementById('tab-view-btn');
+        const tabEditBtn = document.getElementById('tab-edit-btn');
+        const tabSplitBtn = document.getElementById('tab-split-btn');
+
+        // Reset button active styles
+        [tabViewBtn, tabEditBtn, tabSplitBtn].forEach(btn => {
+            if (btn) {
+                btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center text-zinc-400 hover:text-zinc-200";
+            }
+        });
+
+        if (mode === 'view') {
+            viewContainer.classList.remove('hidden');
+            editContainer.classList.add('hidden');
+            tabViewBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center bg-brand-600 text-white shadow";
+            updateRenderedView();
+        } else if (mode === 'edit') {
+            viewContainer.classList.add('hidden');
+            editContainer.classList.remove('hidden');
+            editorLayout.className = "grid grid-cols-1 gap-0";
+            splitPreviewCol.classList.add('hidden');
+            tabEditBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center bg-brand-600 text-white shadow";
+            updateStats(textarea.value);
+            textarea.focus();
+        } else if (mode === 'split') {
+            viewContainer.classList.add('hidden');
+            editContainer.classList.remove('hidden');
+            editorLayout.className = "grid grid-cols-1 lg:grid-cols-2 gap-0";
+            splitPreviewCol.classList.remove('hidden');
+            if (tabSplitBtn) {
+                tabSplitBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center bg-brand-600 text-white shadow";
+            }
+            updateLiveSplitPreview();
+            textarea.focus();
+        }
+    }
+
+    // Input listener for live typing
+    textarea.addEventListener('input', () => {
+        if (currentMode === 'split') {
+            updateLiveSplitPreview();
+        } else {
+            updateStats(textarea.value);
+        }
+    });
+
+    // Initial render on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateRenderedView();
+    });
+</script>
+{% endblock %}

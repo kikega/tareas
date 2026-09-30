@@ -23,6 +23,7 @@ urlpatterns = [
     path('tasks/<int:pk>/detail/', views.task_detail, name='task_detail'),
     path('tasks/<int:pk>/edit/', views.task_edit, name='task_edit'),
     path('tasks/<int:pk>/delete/', views.task_delete, name='task_delete'),
+    path('tasks/<int:pk>/attachment/', views.task_attachment_view, name='task_attachment_view'),
     
     # Subtasks
     path('tasks/<int:task_id>/subtasks/add/', views.subtask_add, name='subtask_add'),

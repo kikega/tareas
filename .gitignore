@@ -22,3 +22,6 @@ staticfiles/
 
 # Logs
 logs/
+
+# User uploads & media
+media/
